@@ -19,14 +19,14 @@ function todayKey() {
 }
 
 function freshProgress() {
-  return { date: todayKey(), count: 0, scoreSum: 0 };
+  return { date: todayKey(), count: 0, scoreSum: 0, completedSentences: [] };
 }
 
 export default function App() {
   const [screen, setScreen] = useState('loading'); // loading | onboarding | home | practice | feedback
   const [prefs, setPrefs] = useState(null);
   const [progress, setProgress] = useState(freshProgress());
-  // session: { sentences: string[], index: number, counted: boolean[] }
+  // session: { sentences: string[], index: number }
   const [session, setSession] = useState(null);
   const [attempt, setAttempt] = useState(null); // { transcript, result }
 
@@ -34,7 +34,22 @@ export default function App() {
     (async () => {
       const savedPrefs = await loadJSON(PREFS_KEY);
       const savedProgress = await loadJSON(PROGRESS_KEY);
-      setProgress(savedProgress && savedProgress.date === todayKey() ? savedProgress : freshProgress());
+      let currentProgress = freshProgress();
+      if (savedProgress && savedProgress.date === todayKey()) {
+        const legacyCompleted = savedPrefs && !Array.isArray(savedProgress.completedSentences)
+          ? buildSession(savedPrefs.level, savedPrefs.goal, savedProgress.count || 0)
+          : [];
+        currentProgress = {
+          ...savedProgress,
+          completedSentences: Array.isArray(savedProgress.completedSentences)
+            ? savedProgress.completedSentences
+            : legacyCompleted,
+        };
+        if (!Array.isArray(savedProgress.completedSentences)) {
+          await saveJSON(PROGRESS_KEY, currentProgress);
+        }
+      }
+      setProgress(currentProgress);
       if (savedPrefs) {
         setPrefs(savedPrefs);
         setScreen('home');
@@ -51,8 +66,15 @@ export default function App() {
   };
 
   const startPractice = () => {
-    const sentences = buildSession(prefs.level, prefs.goal, prefs.target);
-    setSession({ sentences, index: 0, counted: sentences.map(() => false) });
+    const completed = new Set(progress.completedSentences || []);
+    const remainingTarget = Math.max(0, prefs.target - progress.count);
+    const sentences = buildSession(prefs.level, prefs.goal, Number.MAX_SAFE_INTEGER)
+      .filter((sentence) => !completed.has(sentence))
+      .slice(0, remainingTarget);
+
+    if (sentences.length === 0) return;
+
+    setSession({ sentences, index: 0 });
     setScreen('practice');
   };
 
@@ -61,17 +83,15 @@ export default function App() {
     const result = evaluate(target, transcript);
     setAttempt({ transcript, result });
 
-    // Hanya percobaan pertama tiap kalimat yang dihitung ke progres.
-    if (!session.counted[session.index]) {
-      const counted = session.counted.slice();
-      counted[session.index] = true;
-      setSession({ ...session, counted });
-
+    // Satu kalimat hanya dihitung sekali per hari, termasuk setelah sesi dimulai ulang.
+    const completed = progress.completedSentences || [];
+    if (!completed.includes(target)) {
       const base = progress.date === todayKey() ? progress : freshProgress();
       const nextProgress = {
         date: base.date,
         count: base.count + 1,
         scoreSum: base.scoreSum + result.score,
+        completedSentences: [...(base.completedSentences || []), target],
       };
       setProgress(nextProgress);
       await saveJSON(PROGRESS_KEY, nextProgress);
@@ -109,6 +129,7 @@ export default function App() {
         prefs={prefs}
         progress={progress}
         onStart={startPractice}
+        targetReached={progress.count >= prefs.target}
         onChangeTarget={() => setScreen('onboarding')}
       />
     );

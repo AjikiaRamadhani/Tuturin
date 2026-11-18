@@ -141,6 +141,14 @@ const RULES = [
     }),
   },
   {
+    id: 'after-to',
+    regex: new RegExp(`\\bto (${VERBS_S}|${VERBS_PAST})\\b`),
+    check: (m) => ({
+      message: 'Setelah kata "to", kata kerja memakai bentuk dasar.',
+      suggestion: `to ${baseForm(m[1])}`,
+    }),
+  },
+  {
     id: 'be-agreement',
     regex: /\b(i|you|we|they|he|she|it) (is|are|am)\b/,
     check: (m) => {

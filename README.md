@@ -6,6 +6,10 @@ Dibuat dengan Expo (React Native), JavaScript biasa, tanpa backend dan tanpa API
 **Tahap 1 (versi ini):** onboarding, beranda, latihan, umpan balik, dan Mode Simulasi. Tombol mikrofon sudah ada, tetapi suara sungguhan belum aktif.
 **Tahap 2 (nanti, jika waktu cukup):** speech-to-text sungguhan lewat `expo-speech-recognition` (butuh development build, tidak jalan di Expo Go). Cukup ganti isi `speech.js`, layar lain tidak perlu diubah.
 
+> **Status saat ini:** MVP sudah dicoba di perangkat Android. Alur utama tidak crash, dan progres tetap tersimpan setelah aplikasi ditutup. Speech-to-text sungguhan masih belum aktif.
+
+> **Catatan untuk yang mengunduh repository:** folder ini berisi source code layar dan logika Tuturin, bukan proyek Expo lengkap. Ikuti langkah di bawah untuk membuat proyek Expo blank lalu menyalin file `.js` ke dalamnya.
+
 ## Isi folder
 
 | File | Fungsi |
@@ -40,21 +44,41 @@ Dibuat dengan Expo (React Native), JavaScript biasa, tanpa backend dan tanpa API
    ```
    Di Expo Go pilih **Scan QR code**, lalu scan QR di terminal.
 
+### Cara mencoba fitur utama
+
+1. Pada onboarding, pilih level, tujuan, dan target harian, lalu tekan **Mulai**.
+2. Dari Beranda, tekan **Mulai Latihan**.
+3. Karena speech-to-text belum aktif, buka **Mode Simulasi**.
+4. Masukkan transkrip manual, atau tekan **Isi dengan kalimat target**, lalu kirim.
+5. Periksa skor pelafalan, kata yang salah, dan bagian tata bahasa pada layar Umpan Balik.
+
+Contoh input untuk menguji aturan tata bahasa:
+
+```
+He go to school
+I like to drinks tea every morning
+She don't like coffee
+```
+
+Contoh kedua seharusnya memberi saran `to drink`, karena setelah `to` kata kerja harus memakai bentuk dasar.
+
 **Tanpa HP (opsional, belum diuji):** pratinjau di browser dengan
 `npx expo install react-dom react-native-web @expo/metro-runtime` lalu `npx expo start --web`.
 
 ## Catatan jujur tentang pengujian kode ini
 
-- Logika di `logic.js` diuji otomatis dengan Node (42 uji: skor pelafalan, 13 aturan tata bahasa, tidak ada temuan palsu pada 48 kalimat target, pembuatan sesi).
+- Logika di `logic.js` diuji otomatis dengan Node (42 uji: skor pelafalan, aturan tata bahasa, tidak ada temuan palsu pada 48 kalimat target, pembuatan sesi).
 - Tiap layar diperiksa sintaksnya dan dirender dengan tiruan `react-native` di Node, untuk memastikan semua teks dan `testID` yang dibutuhkan ada.
-- **Belum pernah dijalankan di Expo Go, emulator, atau HP sungguhan.** Kalau muncul layar merah atau error di terminal, kirim pesan error-nya apa adanya.
+- Alur utama sudah dicoba di HP Android: onboarding, latihan, Mode Simulasi, umpan balik, pengulangan, lanjut ke soal berikutnya, dan penyimpanan progres.
+- Pengujian mikrofon sungguhan belum dilakukan karena fitur speech-to-text masih ditunda ke tahap 2.
+- Kalau muncul layar merah atau error di terminal, kirim pesan error-nya apa adanya.
 
 ## Cara kerja singkat
 
 - **Skor pelafalan:** kata target dibandingkan dengan transkrip (huruf besar dan tanda baca diabaikan, urutan diperhitungkan). Skor = kata cocok / jumlah kata terpanjang antara target dan transkrip, jadi kata tambahan menurunkan skor.
-- **Tata bahasa:** 13 aturan sederhana untuk kesalahan umum (he go, I is, a apple, discuss about, dan sebagainya). Bukan AI, jadi hasilnya selalu sama untuk masukan yang sama.
+- **Tata bahasa:** aturan sederhana untuk kesalahan umum (he go, I is, a apple, discuss about, `to drinks`, dan sebagainya). Bukan AI, jadi hasilnya selalu sama untuk masukan yang sama.
 - **Mode Simulasi:** ketik transkrip manual (atau tekan "Isi dengan kalimat target"). Dipakai untuk pengujian otomatis karena Maestro tidak bisa berbicara ke mikrofon.
-- **Progres:** hanya percobaan pertama tiap kalimat yang dihitung. Tombol Ulangi tidak menambah hitungan. Progres di-reset otomatis saat ganti hari.
+- **Progres:** setiap kalimat unik hanya dihitung sekali per hari, termasuk jika pengguna kembali ke beranda lalu memulai sesi lagi. Latihan berikutnya mengambil kalimat yang belum selesai. Tombol Ulangi tidak menambah hitungan. Progres di-reset otomatis saat ganti hari.
 
 ## testID untuk skrip Maestro
 

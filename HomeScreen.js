@@ -4,7 +4,7 @@ import { Screen, Title, Card, Button } from './ui.js';
 import { LEVELS, GOALS } from './data.js';
 import { colors } from './theme.js';
 
-export default function HomeScreen({ prefs, progress, onStart, onChangeTarget }) {
+export default function HomeScreen({ prefs, progress, onStart, onChangeTarget, targetReached }) {
   const levelLabel = (LEVELS.find((l) => l.id === prefs.level) || {}).label || '-';
   const goalLabel = (GOALS.find((g) => g.id === prefs.goal) || {}).label || '-';
   const avg = progress.count > 0 ? `${Math.round(progress.scoreSum / progress.count)}%` : '-';
@@ -31,7 +31,12 @@ export default function HomeScreen({ prefs, progress, onStart, onChangeTarget })
         <Text testID="avg-score-text">{`Rata-rata skor: ${avg}`}</Text>
       </Card>
 
-      <Button testID="start-button" label="Mulai Latihan" onPress={onStart} />
+      <Button
+        testID="start-button"
+        label={targetReached ? 'Target Harian Tercapai' : 'Mulai Latihan'}
+        onPress={onStart}
+        disabled={targetReached}
+      />
       <Button
         testID="change-target-button"
         label="Ubah Target"
