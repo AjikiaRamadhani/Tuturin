@@ -1,6 +1,6 @@
 import React from 'react';
-import { Text, View } from 'react-native';
-import { Screen, Title, Card, Button } from './ui.js';
+import { View } from 'react-native';
+import { Screen, Title, Card, CardHeader, Button, Icon, T } from './ui.js';
 import { colors } from './theme.js';
 
 function labelForScore(score) {
@@ -9,83 +9,139 @@ function labelForScore(score) {
   return 'Perlu latihan lagi.';
 }
 
+function ringColor(score) {
+  if (score >= 90) return colors.teal;
+  if (score >= 60) return colors.yellow;
+  return colors.coral;
+}
+
+function Stat({ label, value, testID, bg, fg }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: bg, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center' }}>
+      <T v="h2" testID={testID} color={fg}>
+        {value}
+      </T>
+      <T v="caption" color={fg} style={{ marginTop: 2, textAlign: 'center' }}>
+        {label}
+      </T>
+    </View>
+  );
+}
+
 export default function FeedbackScreen({ sentence, transcript, result, isLast, onRetry, onNext }) {
+  const total = result.words.length;
+  const okCount = result.words.filter((w) => w.ok).length;
   const badWords = result.words.filter((w) => !w.ok).map((w) => w.word);
 
   return (
     <Screen>
-      <Title>Hasil latihan</Title>
+      <Title style={{ marginBottom: 16 }}>Hasil latihan</Title>
 
       <Card>
-        <Text testID="score-text" style={{ fontSize: 28, fontWeight: '700', color: colors.primaryDark }}>
-          {`Skor pelafalan: ${result.score}%`}
-        </Text>
-        <Text testID="score-label" style={{ color: colors.muted, marginTop: 4 }}>
-          {labelForScore(result.score)}
-        </Text>
+        <View style={{ alignItems: 'center' }}>
+          <View
+            style={{
+              width: 156,
+              height: 156,
+              borderRadius: 78,
+              borderWidth: 12,
+              borderColor: ringColor(result.score),
+              backgroundColor: '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <T v="display" testID="score-text">{`${result.score}%`}</T>
+            <T v="caption" color={colors.muted}>
+              KECOCOKAN
+            </T>
+          </View>
+          <T v="h2" testID="score-label" style={{ marginTop: 16, textAlign: 'center' }}>
+            {labelForScore(result.score)}
+          </T>
+          <T v="caption" color={colors.muted} style={{ marginTop: 4, textAlign: 'center' }}>
+            Dihitung dari kecocokan kata transkrip dengan kalimat target, bukan analisis audio.
+          </T>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+          <Stat testID="stat-correct" label="Kata benar" value={`${okCount}/${total}`} bg={colors.tealSoft} fg={colors.teal} />
+          <Stat testID="stat-wrong" label="Perlu dilatih" value={`${badWords.length}`} bg={colors.badBg} fg={colors.bad} />
+          <Stat testID="stat-extra" label="Kata tambahan" value={`${result.extra.length}`} bg={colors.yellowSoft} fg={colors.onYellow} />
+        </View>
       </Card>
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 6 }}>Kalimat target</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+        <CardHeader icon="locate-outline" title="Kalimat target" />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {result.words.map((w, i) => (
-            <Text
+            <View
               key={`${w.word}-${i}`}
               testID={`word-${i}-${w.ok ? 'ok' : 'bad'}`}
               style={{
-                marginRight: 6,
-                marginBottom: 6,
-                paddingVertical: 4,
-                paddingHorizontal: 8,
-                borderRadius: 8,
-                overflow: 'hidden',
-                backgroundColor: w.ok ? colors.goodBg : colors.badBg,
-                color: w.ok ? colors.good : colors.bad,
-                fontWeight: '600',
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 999,
+                backgroundColor: w.ok ? colors.mint : colors.badBg,
               }}
             >
-              {w.word}
-            </Text>
+              <Icon name={w.ok ? 'checkmark-circle' : 'close-circle'} size={16} color={w.ok ? colors.onMint : colors.bad} />
+              <T v="label" color={w.ok ? colors.onMint : colors.bad} style={{ marginLeft: 6 }}>
+                {w.word}
+              </T>
+            </View>
           ))}
         </View>
-        <Text testID="bad-words-text">
-          {badWords.length === 0
-            ? 'Semua kata sudah benar.'
-            : `Kata yang perlu dilatih: ${badWords.join(', ')}`}
-        </Text>
+        <T v="bodyBold" testID="bad-words-text" color={badWords.length === 0 ? colors.teal : colors.bad}>
+          {badWords.length === 0 ? 'Semua kata sudah benar.' : `Kata yang perlu dilatih: ${badWords.join(', ')}`}
+        </T>
         {result.extra.length > 0 && (
-          <Text testID="extra-words-text" style={{ color: colors.muted, marginTop: 4 }}>
+          <T testID="extra-words-text" color={colors.muted} style={{ marginTop: 4 }}>
             {`Kata tambahan yang terdengar: ${result.extra.join(', ')}`}
-          </Text>
+          </T>
         )}
       </Card>
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 4 }}>Transkrip kamu</Text>
-        <Text testID="transcript-text">{transcript}</Text>
+        <CardHeader icon="document-text-outline" title="Transkrip kamu" />
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 14 }}>
+          <T testID="transcript-text">{transcript}</T>
+        </View>
       </Card>
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 8 }}>Tata bahasa</Text>
+        <CardHeader icon="bulb-outline" title="Tata bahasa" />
         {result.grammar.length === 0 ? (
-          <Text testID="grammar-none">Tidak ada kesalahan tata bahasa yang terdeteksi.</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.tealSoft, borderRadius: 16, padding: 14 }}>
+            <Icon name="checkmark-circle" size={22} color={colors.teal} />
+            <T testID="grammar-none" color={colors.teal} style={{ flex: 1, marginLeft: 10 }}>
+              Tidak ada kesalahan tata bahasa yang terdeteksi.
+            </T>
+          </View>
         ) : (
           result.grammar.map((g, i) => (
             <View
               key={`${g.id}-${i}`}
               testID={`grammar-issue-${i}`}
-              style={{ marginBottom: 10, padding: 10, borderRadius: 10, backgroundColor: colors.warnBg }}
+              style={{ marginBottom: 10, padding: 14, borderRadius: 16, backgroundColor: colors.yellowSoft }}
             >
-              <Text style={{ fontWeight: '600' }}>{`"${g.found}"`}</Text>
-              <Text style={{ marginTop: 2 }}>{g.message}</Text>
-              <Text style={{ marginTop: 2, color: colors.good }}>{`Saran: ${g.suggestion}`}</Text>
+              <T v="bodyBold" color={colors.onYellow}>{`"${g.found}"`}</T>
+              <T style={{ marginTop: 4 }}>{g.message}</T>
+              <T v="bodyBold" color={colors.teal} style={{ marginTop: 6 }}>{`Saran: ${g.suggestion}`}</T>
             </View>
           ))
         )}
       </Card>
 
-      <Button testID="retry-button" label="Ulangi" variant="secondary" onPress={onRetry} />
-      <Button testID="next-button" label={isLast ? 'Selesai' : 'Lanjut'} onPress={onNext} />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Button testID="retry-button" label="Ulangi" icon="refresh" variant="secondary" onPress={onRetry} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button testID="next-button" label={isLast ? 'Selesai' : 'Lanjut'} iconRight="arrow-forward" onPress={onNext} />
+        </View>
+      </View>
     </Screen>
   );
 }

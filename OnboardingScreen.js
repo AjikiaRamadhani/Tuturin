@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
-import { Screen, Title, Card, Button, Chip } from './ui.js';
+import { View } from 'react-native';
+import { Screen, Title, Card, CardHeader, Button, Chip, Brand, Icon, T } from './ui.js';
 import { LEVELS, GOALS, TARGETS } from './data.js';
 import { colors } from './theme.js';
+
+const GOAL_ICONS = {
+  percakapan: 'chatbubble-ellipses-outline',
+  karier: 'briefcase-outline',
+  perjalanan: 'airplane-outline',
+  ujian: 'school-outline',
+};
+
+const ROW = { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
 
 export default function OnboardingScreen({ initial, onSave, onCancel }) {
   const [level, setLevel] = useState(initial ? initial.level : null);
@@ -14,16 +23,21 @@ export default function OnboardingScreen({ initial, onSave, onCancel }) {
 
   return (
     <Screen>
-      <Title testID="onboarding-title">
+      <Brand />
+      <Title testID="onboarding-title" style={{ marginTop: 20 }}>
         {editing ? 'Ubah target belajar' : 'Selamat datang di Tuturin'}
       </Title>
-      <Text style={{ color: colors.muted, marginBottom: 16 }}>
-        Atur dulu level dan tujuanmu supaya latihan berbicara bahasa Inggris sesuai kebutuhan.
-      </Text>
+      <T color={colors.muted} style={{ marginTop: 8, marginBottom: 20 }}>
+        Atur preferensi belajarmu supaya latihan berbicara bahasa Inggris sesuai kebutuhanmu.
+      </T>
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 10 }}>Level bahasa Inggris</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <CardHeader
+          icon="bar-chart-outline"
+          title="Level bahasa Inggris"
+          subtitle="Pilih tingkat kemampuanmu saat ini"
+        />
+        <View style={ROW}>
           {LEVELS.map((l) => (
             <Chip
               key={l.id}
@@ -37,13 +51,14 @@ export default function OnboardingScreen({ initial, onSave, onCancel }) {
       </Card>
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 10 }}>Tujuan belajar</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <CardHeader icon="locate-outline" title="Tujuan belajar" subtitle="Apa fokus utama latihanmu?" />
+        <View style={ROW}>
           {GOALS.map((g) => (
             <Chip
               key={g.id}
               testID={`goal-${g.id}`}
               label={g.label}
+              icon={GOAL_ICONS[g.id]}
               selected={goal === g.id}
               onPress={() => setGoal(g.id)}
             />
@@ -52,8 +67,8 @@ export default function OnboardingScreen({ initial, onSave, onCancel }) {
       </Card>
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 10 }}>Target latihan per hari</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <CardHeader icon="flag-outline" title="Target latihan per hari" subtitle="Komitmen latihan harianmu" />
+        <View style={ROW}>
           {TARGETS.map((n) => (
             <Chip
               key={n}
@@ -64,17 +79,38 @@ export default function OnboardingScreen({ initial, onSave, onCancel }) {
             />
           ))}
         </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: 16,
+            padding: 12,
+            borderRadius: 16,
+            backgroundColor: colors.yellowSoft,
+          }}
+        >
+          <Icon name="bulb-outline" size={20} color={colors.onYellow} />
+          <T v="label" color={colors.onYellow} style={{ flex: 1, marginLeft: 10, fontSize: 13, lineHeight: 18 }}>
+            Latihan singkat tiap hari lebih efektif daripada belajar lama sekali seminggu.
+          </T>
+        </View>
       </Card>
 
       <Button
         testID="onboarding-start"
         label={editing ? 'Simpan' : 'Mulai'}
+        iconRight="arrow-forward"
         disabled={!complete}
         onPress={() => onSave({ level, goal, target })}
       />
       {editing && (
-        <Button testID="onboarding-cancel" label="Batal" variant="secondary" onPress={onCancel} />
+        <View style={{ marginTop: 12 }}>
+          <Button testID="onboarding-cancel" label="Batal" variant="secondary" onPress={onCancel} />
+        </View>
       )}
+      <T v="caption" color={colors.muted} style={{ textAlign: 'center', marginTop: 16 }}>
+        Preferensi bisa diganti kapan saja lewat tombol Ubah Target di beranda.
+      </T>
     </Screen>
   );
 }

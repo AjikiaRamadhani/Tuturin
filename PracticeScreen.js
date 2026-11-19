@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
-import { Screen, Title, Card, Button } from './ui.js';
+import { Pressable, TextInput, View } from 'react-native';
+import { Screen, Title, Card, CardHeader, Button, Badge, ProgressBar, Icon, T } from './ui.js';
 import { startListening } from './speech.js';
-import { colors } from './theme.js';
+import { TRANSLATIONS } from './data.js';
+import { colors, fonts } from './theme.js';
 
 function messageForError(code) {
   switch (code) {
@@ -21,6 +22,8 @@ export default function PracticeScreen({ sentence, index, total, onSubmit, onBac
   const [status, setStatus] = useState('Siap');
   const [message, setMessage] = useState('');
   const [simText, setSimText] = useState('');
+
+  const translation = TRANSLATIONS[sentence];
 
   const handleMic = () => {
     setMessage('');
@@ -49,84 +52,143 @@ export default function PracticeScreen({ sentence, index, total, onSubmit, onBac
 
   return (
     <Screen>
-      <Text testID="practice-progress" style={{ color: colors.muted, marginBottom: 4 }}>
-        {`Kalimat ${index + 1} dari ${total}`}
-      </Text>
-      <Title>Ucapkan kalimat ini</Title>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Pressable
+          testID="back-button"
+          onPress={onBack}
+          accessibilityRole="button"
+          style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingRight: 12 }}
+        >
+          <Icon name="chevron-back" size={22} color={colors.primary} />
+          <T v="bodyBold" color={colors.primary}>
+            Kembali
+          </T>
+        </Pressable>
+        <Badge testID="practice-progress" label={`Kalimat ${index + 1} dari ${total}`} tone="surface" icon="checkmark-circle" />
+      </View>
 
-      <Card>
-        <Text testID="target-sentence" style={{ fontSize: 22, lineHeight: 30, color: colors.primaryDark }}>
+      <View style={{ marginTop: 8, marginBottom: 20 }}>
+        <ProgressBar value={(index + 1) / total} testID="practice-bar" />
+      </View>
+
+      <Title style={{ marginBottom: 12 }}>Ucapkan kalimat ini</Title>
+
+      <Card tone="teal">
+        <T v="h1" testID="target-sentence" color="#FFFFFF">
           {sentence}
-        </Text>
+        </T>
+        {translation ? (
+          <T testID="target-translation" color="rgba(255,255,255,0.88)" style={{ marginTop: 10 }}>
+            {translation}
+          </T>
+        ) : null}
       </Card>
 
-      <View style={{ alignItems: 'center', marginVertical: 8 }}>
-        <Pressable
-          testID="mic-button"
-          onPress={handleMic}
-          accessibilityRole="button"
-          style={({ pressed }) => ({
-            width: 88,
-            height: 88,
-            borderRadius: 44,
-            backgroundColor: colors.primary,
+      <View style={{ alignItems: 'center', marginVertical: 12 }}>
+        <View
+          style={{
+            width: 144,
+            height: 144,
+            borderRadius: 72,
+            backgroundColor: 'rgba(242,107,122,0.12)',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: pressed ? 0.85 : 1,
-          })}
+          }}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>MIC</Text>
-        </Pressable>
-        <Text style={{ marginTop: 8, color: colors.muted }}>Tekan untuk bicara</Text>
-        <Text testID="speech-status" style={{ marginTop: 4, fontWeight: '600' }}>{`Status: ${status}`}</Text>
+          <View
+            style={{
+              width: 116,
+              height: 116,
+              borderRadius: 58,
+              backgroundColor: 'rgba(242,107,122,0.22)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Pressable
+              testID="mic-button"
+              onPress={handleMic}
+              accessibilityRole="button"
+              accessibilityLabel="Tekan untuk bicara"
+              style={({ pressed }) => ({
+                width: 88,
+                height: 88,
+                borderRadius: 44,
+                backgroundColor: colors.coral,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.85 : 1,
+              })}
+            >
+              <Icon name="mic" size={38} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        </View>
+        <T v="h3" style={{ marginTop: 12 }}>
+          Tekan untuk bicara
+        </T>
+        <View style={{ marginTop: 8 }}>
+          <Badge testID="speech-status" label={`Status: ${status}`} tone="surface" />
+        </View>
       </View>
 
       {message ? (
         <View
           style={{
-            backgroundColor: colors.warnBg,
-            borderRadius: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.yellowSoft,
+            borderRadius: 16,
             padding: 12,
-            marginBottom: 12,
+            marginBottom: 16,
           }}
         >
-          <Text testID="practice-message" style={{ color: colors.warn }}>
+          <Icon name="information-circle-outline" size={22} color={colors.onYellow} />
+          <T testID="practice-message" color={colors.onYellow} style={{ flex: 1, marginLeft: 10 }}>
             {message}
-          </Text>
+          </T>
         </View>
       ) : null}
 
       <Card>
-        <Text style={{ fontWeight: '700', marginBottom: 4 }}>Mode Simulasi</Text>
-        <Text style={{ color: colors.muted, marginBottom: 10 }}>
-          Ketik transkrip sebagai pengganti suara. Dipakai untuk pengujian otomatis.
-        </Text>
+        <CardHeader
+          icon="keypad-outline"
+          title="Mode Simulasi"
+          subtitle="Ketik transkrip sebagai pengganti suara. Dipakai untuk pengujian otomatis."
+          right={<Badge label="Uji Teks" tone="mint" />}
+        />
         <TextInput
           testID="sim-input"
           value={simText}
           onChangeText={setSimText}
-          placeholder="Ketik transkrip di sini"
+          placeholder="Ketik transkrip di sini..."
+          placeholderTextColor="#8A7172"
           autoCapitalize="none"
           autoCorrect={false}
           style={{
-            borderWidth: 1,
+            borderWidth: 1.5,
             borderColor: colors.border,
-            borderRadius: 10,
-            padding: 12,
+            borderRadius: 20,
+            paddingVertical: 14,
+            paddingHorizontal: 16,
             fontSize: 16,
-            backgroundColor: '#FFFFFF',
+            fontFamily: fonts.regular,
+            color: colors.text,
+            backgroundColor: colors.surface,
+            marginBottom: 12,
           }}
         />
         <Button
           testID="sim-fill-target"
           label="Isi dengan kalimat target"
+          icon="sparkles"
           variant="secondary"
           onPress={() => setSimText(sentence)}
         />
-        <Button testID="sim-submit" label="Kirim Transkrip" onPress={handleSimSubmit} />
+        <View style={{ marginTop: 12 }}>
+          <Button testID="sim-submit" label="Kirim Transkrip" iconRight="arrow-forward" onPress={handleSimSubmit} />
+        </View>
       </Card>
-
-      <Button testID="back-button" label="Kembali ke Beranda" variant="secondary" onPress={onBack} />
     </Screen>
   );
 }

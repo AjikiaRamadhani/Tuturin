@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import * as PlusJakarta from '@expo-google-fonts/plus-jakarta-sans';
 import { colors } from './theme.js';
 import { loadJSON, saveJSON } from './storage.js';
 import { buildSession, evaluate } from './logic.js';
@@ -11,6 +13,19 @@ import FeedbackScreen from './FeedbackScreen.js';
 
 const PREFS_KEY = 'tuturin:prefs';
 const PROGRESS_KEY = 'tuturin:progress';
+
+// Hanya bobot yang dipakai. Nama yang tidak ada di paket dilewati supaya
+// aplikasi tidak error (font bawaan Android dipakai sebagai cadangan).
+const FONT_MAP = {};
+[
+  'PlusJakartaSans_400Regular',
+  'PlusJakartaSans_500Medium',
+  'PlusJakartaSans_600SemiBold',
+  'PlusJakartaSans_700Bold',
+  'PlusJakartaSans_800ExtraBold',
+].forEach((name) => {
+  if (PlusJakarta[name]) FONT_MAP[name] = PlusJakarta[name];
+});
 
 function todayKey() {
   const d = new Date();
@@ -23,6 +38,9 @@ function freshProgress() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts(FONT_MAP);
+  const fontsReady = fontsLoaded || !!fontError;
+
   const [screen, setScreen] = useState('loading'); // loading | onboarding | home | practice | feedback
   const [prefs, setPrefs] = useState(null);
   const [progress, setProgress] = useState(freshProgress());
@@ -109,7 +127,7 @@ export default function App() {
   };
 
   let content = null;
-  if (screen === 'loading') {
+  if (screen === 'loading' || !fontsReady) {
     content = (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />
