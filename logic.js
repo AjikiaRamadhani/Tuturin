@@ -1,7 +1,7 @@
 // Logika inti Tuturin (tanpa dependensi React Native, jadi mudah diuji).
 // Semua fungsi bersifat deterministik: masukan yang sama selalu memberi hasil yang sama.
 
-import { SENTENCES } from './data.js';
+import { SENTENCES, LESSONS } from './data.js';
 
 // ---------- Normalisasi teks ----------
 
@@ -67,7 +67,9 @@ const IRREGULAR_BASE = {
   went: 'go', ate: 'eat', saw: 'see', took: 'take', came: 'come',
   got: 'get', made: 'make', bought: 'buy', said: 'say', was: 'be',
   were: 'be', had: 'have', gave: 'give', ran: 'run', wrote: 'write',
-  met: 'meet', knew: 'know', thought: 'think',
+  met: 'meet', knew: 'know', thought: 'think', began: 'begin', brought: 'bring',
+  drank: 'drink', felt: 'feel', paid: 'pay', slept: 'sleep', spoke: 'speak',
+  taught: 'teach', told: 'tell', understood: 'understand', sent: 'send',
 };
 
 function baseForm(verb) {
@@ -83,22 +85,36 @@ function thirdPerson(verb) {
   if (verb === 'go') return 'goes';
   if (verb === 'do') return 'does';
   if (verb.endsWith('y') && !/[aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ies';
-  if (/(sh|ch|ss|x)$/.test(verb)) return verb + 'es';
+  if (/(sh|ch|ss|x|o)$/.test(verb)) return verb + 'es';
   return verb + 's';
 }
 
-const ING = {
-  go: 'going', eat: 'eating', work: 'working', study: 'studying',
-  learn: 'learning', try: 'trying', come: 'coming', speak: 'speaking',
-  write: 'writing', play: 'playing', do: 'doing',
-};
+const DOUBLE_FINAL = ['run', 'sit', 'get', 'swim', 'stop', 'begin', 'plan'];
+function ingForm(verb) {
+  if (verb.endsWith('ie')) return verb.slice(0, -2) + 'ying';
+  if (verb.endsWith('e') && !verb.endsWith('ee')) return verb.slice(0, -1) + 'ing';
+  if (DOUBLE_FINAL.includes(verb)) return verb + verb[verb.length - 1] + 'ing';
+  return verb + 'ing';
+}
 
-const VERBS_BASE =
-  'go|have|do|want|like|need|work|live|study|speak|eat|play|know|think|come|take|make|get|see';
-const VERBS_S =
-  'goes|has|does|wants|likes|needs|works|lives|studies|speaks|eats|plays|knows|thinks|comes|takes|makes|gets|sees|says';
+// Kata kerja yang dikenali. Sengaja tidak memuat kata yang juga sering jadi kata benda
+// (book, call, walk, change, help, visit, look, practice) supaya tidak salah menandai.
+const BASE_LIST = [
+  'go', 'have', 'do', 'want', 'like', 'need', 'work', 'live', 'study', 'speak', 'eat', 'play', 'know',
+  'think', 'come', 'take', 'make', 'get', 'see', 'use', 'help', 'learn', 'try', 'start', 'finish', 'open',
+  'close', 'drink', 'buy', 'send', 'ask', 'tell', 'give', 'find', 'leave', 'meet', 'run', 'write', 'teach',
+  'travel', 'cook', 'wait', 'stay', 'sleep', 'listen', 'pay', 'arrive', 'begin', 'bring', 'keep', 'feel',
+  'love', 'hate', 'enjoy', 'prefer', 'remember', 'understand', 'sing', 'swim', 'drive', 'watch', 'wash',
+  'clean', 'teach', 'join', 'follow', 'believe', 'hope', 'say',
+];
+const VERBS_BASE = [...new Set(BASE_LIST)].join('|');
+const VERBS_S = [...new Set(BASE_LIST)].map(thirdPerson).join('|');
 const VERBS_PAST =
-  'went|ate|saw|took|came|got|made|bought|said|was|were|had|gave|ran|wrote|met|knew|thought';
+  'went|ate|saw|took|came|got|made|bought|said|was|were|had|gave|ran|wrote|met|knew|thought|began|brought|drank|felt|paid|slept|spoke|taught|told|understood|sent';
+// Untuk aturan am/is/are + kata kerja dasar. Daftar lebih pendek karena open, close, clean, dll.
+// juga kata sifat (is open, is clean) dan tidak boleh ditandai salah.
+const BE_BASE =
+  'go|eat|work|study|learn|try|come|speak|write|play|do|run|sleep|travel|cook|drive|swim|sing|wait|stay|watch|listen';
 
 const CONSONANT_SOUND_U = /^(uni|use|usu|eur|one|onc|uti)/;
 
@@ -170,10 +186,10 @@ const RULES = [
   },
   {
     id: 'be-base',
-    regex: /\b(am|is|are) (go|eat|work|study|learn|try|come|speak|write|play|do)\b/,
+    regex: new RegExp(`\\b(am|is|are) (${BE_BASE})\\b`),
     check: (m) => ({
       message: 'Setelah am/is/are, gunakan kata kerja berakhiran -ing.',
-      suggestion: `${m[1]} ${ING[m[2]]}`,
+      suggestion: `${m[1]} ${ingForm(m[2])}`,
     }),
   },
   {
@@ -294,4 +310,145 @@ export function buildSession(levelId, goalId, count) {
     .filter((g) => g !== goalId)
     .flatMap((g) => level[g]);
   return [...first, ...others].slice(0, count);
+}
+
+// ---------- Pelajaran ----------
+
+// 4 pelajaran untuk satu level. Pelajaran yang cocok dengan tujuan diberi tanda
+// recommended dan ditaruh paling atas; sisanya mengikuti urutan tetap.
+export function lessonsFor(levelId, goalId) {
+  const list = LESSONS.filter((l) => l.level === levelId).map((l) => ({ ...l, recommended: l.goal === goalId }));
+  return [...list.filter((l) => l.recommended), ...list.filter((l) => !l.recommended)];
+}
+
+export function getLesson(id) {
+  return LESSONS.find((l) => l.id === id) || null;
+}
+
+// ---------- Balasan Nala (skrip tetap, bukan AI) ----------
+// Dipilih dari skor. Variasi kalimat ditentukan oleh nomor langkah, bukan acak,
+// supaya hasil uji selalu sama.
+
+export const MAX_ATTEMPTS = 3;
+
+const PRAISE = [
+  'Hebat! Pelafalanmu sangat jelas.',
+  'Bagus sekali! Itu hampir sempurna.',
+  'Mantap! Kamu terdengar percaya diri.',
+  'Luar biasa! Pertahankan ya.',
+];
+const ENCOURAGE = [
+  'Sudah cukup baik. Coba lagi supaya lebih tepat, atau lanjut kalau kamu mau.',
+  'Hampir! Beberapa kata masih perlu dilatih.',
+  'Bagus, tinggal sedikit lagi. Mau coba sekali lagi?',
+  'Lumayan! Perhatikan kata yang ditandai merah.',
+];
+const REPEAT = [
+  'Hmm, aku belum menangkap kalimatnya. Coba ucapkan sekali lagi pelan-pelan.',
+  'Belum cocok dengan kalimat target. Yuk ulangi, dengarkan dulu terjemahannya.',
+  'Masih jauh dari kalimat target. Ulangi lagi ya, kamu pasti bisa.',
+  'Belum tepat. Coba lagi dengan lebih pelan dan jelas.',
+];
+
+// attempts = jumlah percobaan pada langkah ini (termasuk yang barusan).
+// Hasil: { kind, text, canRetry, canContinue }
+export function nalaReply(score, attempts, stepIndex) {
+  const i = Math.abs(stepIndex || 0) % 4;
+  if (score >= 90) {
+    return { kind: 'great', text: PRAISE[i], canRetry: false, canContinue: true };
+  }
+  if (score >= 60) {
+    return { kind: 'ok', text: ENCOURAGE[i], canRetry: true, canContinue: true };
+  }
+  const forced = attempts >= MAX_ATTEMPTS;
+  return {
+    kind: 'retry',
+    text: forced ? 'Tidak apa-apa, kita lanjut dulu ya. Nanti bisa diulang lagi.' : REPEAT[i],
+    canRetry: true,
+    canContinue: forced,
+  };
+}
+
+export function nalaIntro(step, index, total, tutorName = 'Nala') {
+  const opening = index === 0 ? `Hai, aku ${tutorName}! Yuk mulai. ` : '';
+  return `${opening}Langkah ${index + 1} dari ${total}. Ucapkan: "${step.en}" Artinya: ${step.id}`;
+}
+
+export function hintFor(step) {
+  const words = step.en.split(' ');
+  const start = words.slice(0, 2).join(' ');
+  return `Artinya: ${step.id}\nMulai dengan: "${start}"`;
+}
+
+// ---------- Ringkasan pelajaran ----------
+
+export function mastery(bestScores) {
+  if (!bestScores || bestScores.length === 0) return 0;
+  const sum = bestScores.reduce((a, b) => a + b, 0);
+  return Math.round(sum / bestScores.length);
+}
+
+export function formatDuration(seconds) {
+  const s = Math.max(0, Math.round(seconds || 0));
+  if (s < 60) return `${s} dtk`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r === 0 ? `${m} mnt` : `${m} mnt ${r} dtk`;
+}
+
+// ---------- Tanggal, progres, streak ----------
+
+export function dateKey(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function previousDateKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return dateKey(new Date(y, m - 1, d - 1));
+}
+
+// streak = { last: 'YYYY-MM-DD' | null, count: number }
+export function nextStreak(streak, today) {
+  const cur = streak || { last: null, count: 0 };
+  if (cur.last === today) return cur;
+  if (cur.last === previousDateKey(today)) return { last: today, count: cur.count + 1 };
+  return { last: today, count: 1 };
+}
+
+// Streak yang ditampilkan: 0 kalau sudah lewat dari kemarin.
+export function activeStreak(streak, today) {
+  if (!streak || !streak.last) return 0;
+  if (streak.last === today || streak.last === previousDateKey(today)) return streak.count;
+  return 0;
+}
+
+// Progres hari ini: { date, completed: [lessonId] }
+export function freshProgress(today) {
+  return { date: today, completed: [] };
+}
+
+export function normalizeProgress(saved, today) {
+  if (!saved || saved.date !== today || !Array.isArray(saved.completed)) return freshProgress(today);
+  return { date: today, completed: [...new Set(saved.completed)] };
+}
+
+export function normalizePrefs(saved) {
+  if (!saved || !saved.level || !saved.goal) return null;
+  const target = [1, 2, 3].includes(saved.target) ? saved.target : 2;
+  return { level: saved.level, goal: saved.goal, target };
+}
+
+export function completeLesson(progress, lessonId, today) {
+  const base = normalizeProgress(progress, today);
+  if (base.completed.includes(lessonId)) return base;
+  return { date: today, completed: [...base.completed, lessonId] };
+}
+
+// ---------- Kosakata tersimpan ----------
+
+export function toggleVocab(list, item) {
+  const cur = Array.isArray(list) ? list : [];
+  if (cur.some((v) => v.en === item.en)) return cur.filter((v) => v.en !== item.en);
+  return [...cur, { en: item.en, id: item.id }];
 }

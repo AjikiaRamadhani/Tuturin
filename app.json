@@ -1,27 +1,47 @@
 {
   "expo": {
-    "name": "tuturin",
+    "name": "Tuturin",
     "slug": "tuturin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Tuturin memakai pengenalan suara untuk memeriksa ucapanmu.",
+        "NSMicrophoneUsageDescription": "Tuturin memakai mikrofon agar kamu bisa berlatih berbicara."
+      }
     },
     "android": {
+      "package": "com.nullpointer.tuturin",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Tuturin memakai mikrofon agar kamu bisa berlatih berbicara.",
+          "speechRecognitionPermission": "Tuturin memakai pengenalan suara untuk memeriksa ucapanmu."
+        }
+      ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "742cb008-879d-48f7-a27f-cbd3f7cc090b"
+      }
+    }
   }
 }

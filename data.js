@@ -13,7 +13,10 @@ export const GOALS = [
   { id: 'ujian', label: 'Ujian' },
 ];
 
-export const TARGETS = [3, 5, 10];
+// Target harian = jumlah pelajaran yang diselesaikan per hari.
+export const TARGETS = [1, 2, 3];
+
+export const TUTOR_NAME = 'Nala';
 
 // 3 level x 4 tujuan x 4 kalimat = 48 kalimat.
 // Catatan: hindari tanda hubung dan kontraksi (o'clock, I'm) supaya
@@ -150,3 +153,38 @@ export const TRANSLATIONS = {
   'Many students believe that regular practice improves speaking skills.': 'Banyak siswa percaya bahwa latihan rutin meningkatkan kemampuan berbicara.',
   'I would like to clarify my answer to the previous question.': 'Saya ingin memperjelas jawaban saya untuk pertanyaan sebelumnya.',
 };
+
+// ---------- Pelajaran ----------
+// 12 pelajaran (3 level x 4 tujuan). Tiap pelajaran memakai 4 kalimat dari SENTENCES
+// sebagai 4 langkah, jadi isi dan terjemahannya tetap konsisten.
+export const LESSON_META = {
+  'pemula-percakapan': { title: 'Berkenalan dan Menyapa', minutes: 4, objectives: ['Memperkenalkan diri', 'Menyapa dan menanyakan kabar'] },
+  'pemula-karier': { title: 'Di Tempat Kerja', minutes: 4, objectives: ['Menyebut tempat dan jam kerja', 'Meminta sesuatu dengan sopan'] },
+  'pemula-perjalanan': { title: 'Bertanya Arah dan Harga', minutes: 4, objectives: ['Menanyakan lokasi', 'Menanyakan harga dan jarak'] },
+  'pemula-ujian': { title: 'Persiapan Ujian', minutes: 4, objectives: ['Menyebut jadwal ujian', 'Meminta pengulangan dan waktu tambahan'] },
+  'menengah-percakapan': { title: 'Obrolan Santai', minutes: 5, objectives: ['Menceritakan kebiasaan', 'Meminta petunjuk jalan', 'Menggunakan bentuk waktu yang tepat'] },
+  'menengah-karier': { title: 'Melamar dan Bekerja', minutes: 5, objectives: ['Melamar posisi', 'Menjelaskan tanggung jawab'] },
+  'menengah-perjalanan': { title: 'Memesan dan Bepergian', minutes: 5, objectives: ['Memesan hotel dan mengubah jadwal', 'Bertanya pada petugas'] },
+  'menengah-ujian': { title: 'Ujian Berbicara', minutes: 5, objectives: ['Membicarakan persiapan ujian', 'Meminta lawan bicara berbicara lebih pelan'] },
+  'mahir-percakapan': { title: 'Berbagi Pendapat dan Rencana', minutes: 5, objectives: ['Mengungkapkan pengandaian', 'Memberi saran', 'Menceritakan pengalaman'] },
+  'mahir-karier': { title: 'Komunikasi Profesional', minutes: 5, objectives: ['Menyampaikan nilai diri', 'Mengusulkan rapat dan pertimbangan'] },
+  'mahir-perjalanan': { title: 'Situasi Rumit Saat Bepergian', minutes: 5, objectives: ['Meminta perpanjangan dengan sopan', 'Menjelaskan masalah penerbangan'] },
+  'mahir-ujian': { title: 'Ujian Tingkat Lanjut', minutes: 5, objectives: ['Menyampaikan opini dengan argumen', 'Memperjelas jawaban'] },
+};
+
+export const LESSONS = [];
+for (const level of LEVELS) {
+  for (const goal of GOALS) {
+    const id = `${level.id}-${goal.id}`;
+    const meta = LESSON_META[id];
+    LESSONS.push({
+      id,
+      level: level.id,
+      goal: goal.id,
+      title: meta.title,
+      minutes: meta.minutes,
+      objectives: meta.objectives,
+      steps: SENTENCES[level.id][goal.id].map((en) => ({ en, id: TRANSLATIONS[en] })),
+    });
+  }
+}

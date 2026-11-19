@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Screen, Title, Card, CardHeader, Button, Badge, ProgressBar, Brand, Icon, T } from './ui.js';
 import { LEVELS, GOALS } from './data.js';
 import { colors } from './theme.js';
@@ -28,16 +28,72 @@ function SettingRow({ icon, label, value, testID, tone }) {
   );
 }
 
-export default function HomeScreen({ prefs, progress, onStart, onChangeTarget, targetReached }) {
+function LessonRow({ lesson, done, onPress }) {
+  return (
+    <Pressable
+      testID={`lesson-${lesson.id}`}
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => ({
+        padding: 16,
+        borderRadius: 24,
+        borderWidth: 1.5,
+        borderColor: lesson.recommended ? colors.teal : colors.border,
+        backgroundColor: lesson.recommended ? colors.tealSoft : colors.card,
+        marginBottom: 10,
+        opacity: pressed ? 0.85 : 1,
+      })}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1, paddingRight: 8 }}>
+          <T v="h3" testID={`lesson-${lesson.id}-title`}>
+            {lesson.title}
+          </T>
+          <T color={colors.muted} style={{ marginTop: 2 }}>
+            {lesson.objectives.length} tujuan, sekitar {lesson.minutes} menit
+          </T>
+        </View>
+        <Icon name="chevron-forward" size={22} color={colors.muted} />
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+        {lesson.recommended ? (
+          <Badge testID={`lesson-${lesson.id}-recommended`} label="Rekomendasi" tone="mint" icon="sparkles" />
+        ) : null}
+        <Badge
+          testID={`lesson-${lesson.id}-status`}
+          label={done ? 'Selesai' : 'Belum'}
+          tone={done ? 'yellow' : 'surface'}
+          icon={done ? 'checkmark-circle' : undefined}
+        />
+      </View>
+    </Pressable>
+  );
+}
+
+export default function HomeScreen({
+  prefs,
+  progress,
+  lessons,
+  streak,
+  vocabCount,
+  targetReached,
+  onOpenLesson,
+  onChangeTarget,
+  onOpenVocab,
+}) {
   const levelLabel = (LEVELS.find((l) => l.id === prefs.level) || {}).label || '-';
   const goalLabel = (GOALS.find((g) => g.id === prefs.goal) || {}).label || '-';
-  const avg = progress.count > 0 ? `${Math.round(progress.scoreSum / progress.count)}%` : '-';
-  const remaining = Math.max(0, prefs.target - progress.count);
-  const pct = prefs.target > 0 ? Math.min(1, progress.count / prefs.target) : 0;
+  const doneCount = progress.completed.length;
+  const remaining = Math.max(0, prefs.target - doneCount);
+  const pct = prefs.target > 0 ? Math.min(1, doneCount / prefs.target) : 0;
+  const nextLesson = lessons.find((l) => !progress.completed.includes(l.id)) || lessons[0];
 
   return (
     <Screen>
-      <Brand />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Brand />
+        <Badge testID="streak-text" label={`${streak} hari beruntun`} tone="yellow" icon="flame" />
+      </View>
       <Title testID="home-greeting" style={{ marginTop: 20, marginBottom: 16 }}>
         Halo! Siap latihan berbicara?
       </Title>
@@ -45,34 +101,29 @@ export default function HomeScreen({ prefs, progress, onStart, onChangeTarget, t
       <Card tone="coral">
         <Badge label="MISI HARIAN" tone="white" icon="flash" />
         <T v="h1" color="#FFFFFF" style={{ marginTop: 12 }}>
-          Latihan Berbicara Hari Ini
+          Belajar bersama Nala
         </T>
-        <T color="#FFFFFF" style={{ marginTop: 6, marginBottom: 16 }}>
+        <T color="#FFFFFF" style={{ marginTop: 6, marginBottom: 16 }} testID="daily-message">
           {targetReached
-            ? 'Target hari ini sudah tercapai. Mantap, sampai jumpa besok!'
-            : `Latih bahasa Inggrismu dengan ${remaining} kalimat lagi hari ini.`}
+            ? 'Target hari ini sudah tercapai. Mantap, kamu boleh lanjut atau istirahat!'
+            : `Selesaikan ${remaining} pelajaran lagi hari ini.`}
         </T>
         <Button
           testID="start-button"
-          label={targetReached ? 'Target Harian Tercapai' : 'Mulai Latihan'}
-          icon={targetReached ? 'checkmark-circle' : 'mic'}
+          label={targetReached ? 'Belajar Lagi' : 'Lanjut Belajar'}
+          icon="mic"
           variant="light"
-          onPress={onStart}
-          disabled={targetReached}
+          onPress={() => onOpenLesson(nextLesson.id)}
         />
       </Card>
 
       <Card>
-        <CardHeader
-          icon="trending-up"
-          title="Progres hari ini"
-          right={<Badge testID="avg-score-text" label={`Rata-rata skor: ${avg}`} tone="yellow" icon="star" />}
-        />
+        <CardHeader icon="trending-up" title="Progres hari ini" />
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <T v="display" testID="progress-text">{`${progress.count} / ${prefs.target}`}</T>
+            <T v="display" testID="progress-text">{`${doneCount} / ${prefs.target}`}</T>
             <T color={colors.muted} style={{ marginLeft: 8 }}>
-              kalimat selesai
+              pelajaran selesai
             </T>
           </View>
           <T v="bodyBold" testID="progress-percent" color={colors.teal}>{`${Math.round(pct * 100)}%`}</T>
@@ -82,45 +133,35 @@ export default function HomeScreen({ prefs, progress, onStart, onChangeTarget, t
         </View>
       </Card>
 
-      <Card>
+      <T v="h2" style={{ marginBottom: 12 }}>
+        Pelajaran untukmu
+      </T>
+      {lessons.map((l) => (
+        <LessonRow
+          key={l.id}
+          lesson={l}
+          done={progress.completed.includes(l.id)}
+          onPress={() => onOpenLesson(l.id)}
+        />
+      ))}
+
+      <Card style={{ marginTop: 6 }}>
         <CardHeader icon="settings-outline" title="Pengaturan belajarmu" />
         <SettingRow icon="bar-chart-outline" label="Level" value={levelLabel} testID="summary-level" tone="mint" />
-        <SettingRow
-          icon="chatbubble-ellipses-outline"
-          label="Tujuan"
-          value={goalLabel}
-          testID="summary-goal"
-          tone="coral"
-        />
-        <SettingRow
-          icon="flag-outline"
-          label="Target harian"
-          value={`${prefs.target} kalimat`}
-          testID="summary-target"
-          tone="yellow"
-        />
+        <SettingRow icon="chatbubble-ellipses-outline" label="Tujuan" value={goalLabel} testID="summary-goal" tone="coral" />
+        <SettingRow icon="flag-outline" label="Target harian" value={`${prefs.target} pelajaran`} testID="summary-target" tone="yellow" />
         <View style={{ marginTop: 8 }}>
-          <Button
-            testID="change-target-button"
-            label="Ubah Target"
-            icon="options-outline"
-            variant="secondary"
-            onPress={onChangeTarget}
-          />
+          <Button testID="change-target-button" label="Ubah Target" icon="options-outline" variant="secondary" onPress={onChangeTarget} />
         </View>
       </Card>
 
-      <Card tone="surface">
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Icon name="bulb-outline" size={22} color={colors.onYellow} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <T v="caption" color={colors.muted}>
-              TIPS CEPAT
-            </T>
-            <T style={{ marginTop: 2 }}>Ucapkan kalimat dengan jelas dan tidak terlalu cepat.</T>
-          </View>
-        </View>
-      </Card>
+      <Button
+        testID="vocab-button"
+        label={`Kosakata Tersimpan (${vocabCount})`}
+        icon="bookmark"
+        variant="secondary"
+        onPress={onOpenVocab}
+      />
     </Screen>
   );
 }

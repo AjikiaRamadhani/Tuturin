@@ -5,14 +5,22 @@ import { useFonts } from 'expo-font';
 import * as PlusJakarta from '@expo-google-fonts/plus-jakarta-sans';
 import { colors } from './theme.js';
 import { loadJSON, saveJSON } from './storage.js';
-import { buildSession, evaluate } from './logic.js';
+import {
+  lessonsFor, getLesson, dateKey, normalizePrefs, normalizeProgress, completeLesson,
+  nextStreak, activeStreak, toggleVocab,
+} from './logic.js';
 import OnboardingScreen from './OnboardingScreen.js';
+import PlanScreen from './PlanScreen.js';
 import HomeScreen from './HomeScreen.js';
-import PracticeScreen from './PracticeScreen.js';
-import FeedbackScreen from './FeedbackScreen.js';
+import LessonIntroScreen from './LessonIntroScreen.js';
+import LessonScreen from './LessonScreen.js';
+import SummaryScreen from './SummaryScreen.js';
+import VocabScreen from './VocabScreen.js';
 
 const PREFS_KEY = 'tuturin:prefs';
 const PROGRESS_KEY = 'tuturin:progress';
+const STREAK_KEY = 'tuturin:streak';
+const VOCAB_KEY = 'tuturin:vocab';
 
 // Hanya bobot yang dipakai. Nama yang tidak ada di paket dilewati supaya
 // aplikasi tidak error (font bawaan Android dipakai sebagai cadangan).
@@ -27,47 +35,29 @@ const FONT_MAP = {};
   if (PlusJakarta[name]) FONT_MAP[name] = PlusJakarta[name];
 });
 
-function todayKey() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function freshProgress() {
-  return { date: todayKey(), count: 0, scoreSum: 0, completedSentences: [] };
-}
-
 export default function App() {
   const [fontsLoaded, fontError] = useFonts(FONT_MAP);
   const fontsReady = fontsLoaded || !!fontError;
 
-  const [screen, setScreen] = useState('loading'); // loading | onboarding | home | practice | feedback
+  // loading | onboarding | plan | home | intro | lesson | summary | vocab
+  const [screen, setScreen] = useState('loading');
   const [prefs, setPrefs] = useState(null);
-  const [progress, setProgress] = useState(freshProgress());
-  // session: { sentences: string[], index: number }
-  const [session, setSession] = useState(null);
-  const [attempt, setAttempt] = useState(null); // { transcript, result }
+  const [progress, setProgress] = useState(normalizeProgress(null, dateKey()));
+  const [streak, setStreak] = useState({ last: null, count: 0 });
+  const [vocab, setVocab] = useState([]);
+  const [lessonId, setLessonId] = useState(null);
+  const [lessonRun, setLessonRun] = useState(0); // naik tiap pelajaran dimulai, agar state layar bersih
+  const [result, setResult] = useState(null);
 
   useEffect(() => {
     (async () => {
-      const savedPrefs = await loadJSON(PREFS_KEY);
-      const savedProgress = await loadJSON(PROGRESS_KEY);
-      let currentProgress = freshProgress();
-      if (savedProgress && savedProgress.date === todayKey()) {
-        const legacyCompleted = savedPrefs && !Array.isArray(savedProgress.completedSentences)
-          ? buildSession(savedPrefs.level, savedPrefs.goal, savedProgress.count || 0)
-          : [];
-        currentProgress = {
-          ...savedProgress,
-          completedSentences: Array.isArray(savedProgress.completedSentences)
-            ? savedProgress.completedSentences
-            : legacyCompleted,
-        };
-        if (!Array.isArray(savedProgress.completedSentences)) {
-          await saveJSON(PROGRESS_KEY, currentProgress);
-        }
-      }
-      setProgress(currentProgress);
+      const savedPrefs = normalizePrefs(await loadJSON(PREFS_KEY));
+      const today = dateKey();
+      setProgress(normalizeProgress(await loadJSON(PROGRESS_KEY), today));
+      const savedStreak = await loadJSON(STREAK_KEY);
+      if (savedStreak && typeof savedStreak.count === 'number') setStreak(savedStreak);
+      const savedVocab = await loadJSON(VOCAB_KEY);
+      if (Array.isArray(savedVocab)) setVocab(savedVocab);
       if (savedPrefs) {
         setPrefs(savedPrefs);
         setScreen('home');
@@ -77,54 +67,48 @@ export default function App() {
     })();
   }, []);
 
+  const firstTime = !prefs;
   const savePrefs = async (next) => {
+    const wasFirst = firstTime;
     setPrefs(next);
     await saveJSON(PREFS_KEY, next);
-    setScreen('home');
+    setScreen(wasFirst ? 'plan' : 'home');
   };
 
-  const startPractice = () => {
-    const completed = new Set(progress.completedSentences || []);
-    const remainingTarget = Math.max(0, prefs.target - progress.count);
-    const sentences = buildSession(prefs.level, prefs.goal, Number.MAX_SAFE_INTEGER)
-      .filter((sentence) => !completed.has(sentence))
-      .slice(0, remainingTarget);
-
-    if (sentences.length === 0) return;
-
-    setSession({ sentences, index: 0 });
-    setScreen('practice');
+  const changeVocab = async (item) => {
+    const next = toggleVocab(vocab, item);
+    setVocab(next);
+    await saveJSON(VOCAB_KEY, next);
   };
 
-  const submitTranscript = async (transcript) => {
-    const target = session.sentences[session.index];
-    const result = evaluate(target, transcript);
-    setAttempt({ transcript, result });
-
-    // Satu kalimat hanya dihitung sekali per hari, termasuk setelah sesi dimulai ulang.
-    const completed = progress.completedSentences || [];
-    if (!completed.includes(target)) {
-      const base = progress.date === todayKey() ? progress : freshProgress();
-      const nextProgress = {
-        date: base.date,
-        count: base.count + 1,
-        scoreSum: base.scoreSum + result.score,
-        completedSentences: [...(base.completedSentences || []), target],
-      };
-      setProgress(nextProgress);
-      await saveJSON(PROGRESS_KEY, nextProgress);
-    }
-    setScreen('feedback');
+  const deleteVocab = async (item) => {
+    const next = vocab.filter((v) => v.en !== item.en);
+    setVocab(next);
+    await saveJSON(VOCAB_KEY, next);
   };
 
-  const goNext = () => {
-    if (session.index + 1 < session.sentences.length) {
-      setSession({ ...session, index: session.index + 1 });
-      setScreen('practice');
-    } else {
-      setScreen('home');
-    }
+  const openLesson = (id) => {
+    setLessonId(id);
+    setScreen('intro');
   };
+
+  const finishLesson = async (res) => {
+    const today = dateKey();
+    const nextProgress = completeLesson(progress, lessonId, today);
+    const nextStr = nextStreak(streak, today);
+    setProgress(nextProgress);
+    setStreak(nextStr);
+    setResult(res);
+    await saveJSON(PROGRESS_KEY, nextProgress);
+    await saveJSON(STREAK_KEY, nextStr);
+    setScreen('summary');
+  };
+
+  const today = dateKey();
+  const lesson = lessonId ? getLesson(lessonId) : null;
+  const lessons = prefs ? lessonsFor(prefs.level, prefs.goal) : [];
+  // Progres dari hari kemarin dianggap kosong tanpa perlu menunggu aplikasi dibuka ulang.
+  const todayProgress = normalizeProgress(progress, today);
 
   let content = null;
   if (screen === 'loading' || !fontsReady) {
@@ -134,44 +118,58 @@ export default function App() {
       </View>
     );
   } else if (screen === 'onboarding') {
-    content = (
-      <OnboardingScreen
-        initial={prefs}
-        onSave={savePrefs}
-        onCancel={() => setScreen('home')}
-      />
-    );
+    content = <OnboardingScreen initial={prefs} onSave={savePrefs} onCancel={() => setScreen('home')} />;
+  } else if (screen === 'plan') {
+    content = <PlanScreen prefs={prefs} lessons={lessons} onContinue={() => setScreen('home')} />;
   } else if (screen === 'home') {
     content = (
       <HomeScreen
         prefs={prefs}
-        progress={progress}
-        onStart={startPractice}
-        targetReached={progress.count >= prefs.target}
+        progress={todayProgress}
+        lessons={lessons}
+        streak={activeStreak(streak, today)}
+        vocabCount={vocab.length}
+        targetReached={todayProgress.completed.length >= prefs.target}
+        onOpenLesson={openLesson}
         onChangeTarget={() => setScreen('onboarding')}
+        onOpenVocab={() => setScreen('vocab')}
       />
     );
-  } else if (screen === 'practice') {
+  } else if (screen === 'intro' && lesson) {
     content = (
-      <PracticeScreen
-        sentence={session.sentences[session.index]}
-        index={session.index}
-        total={session.sentences.length}
-        onSubmit={submitTranscript}
+      <LessonIntroScreen
+        lesson={lesson}
         onBack={() => setScreen('home')}
+        onStart={() => {
+          setLessonRun((n) => n + 1);
+          setScreen('lesson');
+        }}
       />
     );
-  } else if (screen === 'feedback') {
+  } else if (screen === 'lesson' && lesson) {
     content = (
-      <FeedbackScreen
-        sentence={session.sentences[session.index]}
-        transcript={attempt.transcript}
-        result={attempt.result}
-        isLast={session.index + 1 >= session.sentences.length}
-        onRetry={() => setScreen('practice')}
-        onNext={goNext}
+      <LessonScreen
+        key={`${lesson.id}-${lessonRun}`}
+        lesson={lesson}
+        savedVocab={vocab}
+        onToggleVocab={changeVocab}
+        onExit={() => setScreen('home')}
+        onFinish={finishLesson}
       />
     );
+  } else if (screen === 'summary' && lesson && result) {
+    content = (
+      <SummaryScreen
+        lesson={lesson}
+        result={result}
+        streak={activeStreak(streak, today)}
+        savedVocab={vocab}
+        onToggleVocab={changeVocab}
+        onHome={() => setScreen('home')}
+      />
+    );
+  } else if (screen === 'vocab') {
+    content = <VocabScreen items={vocab} onDelete={deleteVocab} onBack={() => setScreen('home')} />;
   }
 
   return (

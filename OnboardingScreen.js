@@ -28,7 +28,7 @@ export default function OnboardingScreen({ initial, onSave, onCancel }) {
         {editing ? 'Ubah target belajar' : 'Selamat datang di Tuturin'}
       </Title>
       <T color={colors.muted} style={{ marginTop: 8, marginBottom: 20 }}>
-        Atur preferensi belajarmu supaya latihan berbicara bahasa Inggris sesuai kebutuhanmu.
+        Atur preferensi belajarmu. Nala, tutor kamu, akan menyiapkan pelajaran berbicara yang sesuai.
       </T>
 
       <Card>
@@ -67,13 +67,13 @@ export default function OnboardingScreen({ initial, onSave, onCancel }) {
       </Card>
 
       <Card>
-        <CardHeader icon="flag-outline" title="Target latihan per hari" subtitle="Komitmen latihan harianmu" />
+        <CardHeader icon="flag-outline" title="Target latihan per hari" subtitle="Berapa pelajaran yang ingin kamu selesaikan tiap hari?" />
         <View style={ROW}>
           {TARGETS.map((n) => (
             <Chip
               key={n}
               testID={`target-${n}`}
-              label={`${n} kalimat`}
+              label={`${n} pelajaran`}
               selected={target === n}
               onPress={() => setTarget(n)}
             />
