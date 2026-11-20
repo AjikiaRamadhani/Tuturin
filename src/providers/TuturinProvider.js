@@ -33,6 +33,7 @@ export function TuturinProvider({ children }) {
 
   const user = session?.user || null;
   const userId = user?.id;
+  const savedAvatarPath = profile?.avatar_path;
   const today = dateKey();
 
   useEffect(() => {
@@ -141,7 +142,16 @@ export function TuturinProvider({ children }) {
   const signUp = useCallback((email, password, name) => services.auth.signUp(email, password, name), []);
   const resetPassword = useCallback((email) => services.auth.resetPassword(email), []);
   const signOut = useCallback(() => services.auth.signOut(), []);
-  const deleteAccount = useCallback(() => services.auth.deleteAccount(), []);
+  const deleteAccount = useCallback(async () => {
+    if (user && savedAvatarPath) {
+      try {
+        await services.profiles.removeAvatar(user.id, savedAvatarPath);
+      } catch {
+        // Account deletion should not be blocked by stale avatar storage.
+      }
+    }
+    await services.auth.deleteAccount();
+  }, [user, savedAvatarPath]);
 
   const savePreferences = useCallback(async (preferences) => {
     if (!user) throw new Error('Sesi akun berakhir. Silakan masuk kembali.');
@@ -150,6 +160,13 @@ export function TuturinProvider({ children }) {
     setPhase('ready');
     setSyncWarning('');
   }, [user]);
+
+  const updateAvatar = useCallback(async (asset) => {
+    if (!user) throw new Error('Sesi akun berakhir. Silakan masuk kembali.');
+    const avatar = await services.profiles.saveAvatar(user.id, asset, savedAvatarPath);
+    setProfile((current) => ({ ...current, avatar_path: avatar.path, avatar_url: avatar.url }));
+    return avatar.url;
+  }, [user, savedAvatarPath]);
 
   const finishLesson = useCallback(async (lessonId, lessonResult) => {
     if (!user) throw new Error('Sesi akun berakhir. Silakan masuk kembali.');
@@ -215,12 +232,13 @@ export function TuturinProvider({ children }) {
     signOut,
     deleteAccount,
     savePreferences,
+    updateAvatar,
     finishLesson,
     toggleVocabulary,
   }), [
     phase, session, user, profile, lessons, lessonsSource, progress, streak, today,
     pathCompleted, vocabulary, syncWarning, result, retry, signIn, signUp, resetPassword, signOut,
-    deleteAccount, savePreferences, finishLesson, toggleVocabulary,
+    deleteAccount, savePreferences, updateAvatar, finishLesson, toggleVocabulary,
   ]);
 
   return <TuturinContext.Provider value={value}>{children}</TuturinContext.Provider>;

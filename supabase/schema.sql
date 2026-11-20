@@ -8,6 +8,7 @@ create table if not exists public.profiles (
   id           uuid primary key references auth.users (id) on delete cascade,
   email        text not null,
   display_name text,
+  avatar_path  text,
   role         text not null default 'learner' check (role in ('learner', 'admin')),
   active       boolean not null default true,
   level        text check (level in ('pemula', 'menengah', 'mahir')),
@@ -15,6 +16,8 @@ create table if not exists public.profiles (
   target       int  check (target between 1 and 3),
   created_at   timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists avatar_path text;
 
 create table if not exists public.lessons (
   id          text primary key check (id ~ '^[a-z0-9-]+$'),
@@ -62,6 +65,14 @@ create table if not exists public.saved_vocab (
   created_at timestamptz not null default now(),
   primary key (user_id, en)
 );
+
+-- Foto profil privat; setiap akun hanya dapat membaca dan mengelola foldernya sendiri.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 -- ============ Fungsi bantu ============
 
@@ -170,6 +181,24 @@ create policy streaks_own on public.streaks for all to authenticated
 drop policy if exists vocab_own on public.saved_vocab;
 create policy vocab_own on public.saved_vocab for all to authenticated
   using (user_id = auth.uid() and public.is_active()) with check (user_id = auth.uid() and public.is_active());
+
+drop policy if exists avatars_public_read on storage.objects;
+drop policy if exists avatars_read_own on storage.objects;
+create policy avatars_read_own on storage.objects for select to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and public.is_active());
+
+drop policy if exists avatars_insert_own on storage.objects;
+create policy avatars_insert_own on storage.objects for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and public.is_active());
+
+drop policy if exists avatars_update_own on storage.objects;
+create policy avatars_update_own on storage.objects for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and public.is_active())
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and public.is_active());
+
+drop policy if exists avatars_delete_own on storage.objects;
+create policy avatars_delete_own on storage.objects for delete to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and public.is_active());
 
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;

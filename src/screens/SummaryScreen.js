@@ -42,7 +42,7 @@ export default function SummaryScreen({ lesson, result, streak, savedVocab, onTo
 
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
         <Stat testID="summary-new-phrases" label="Frasa baru" value={`${lesson.steps.length}`} bg={colors.tealSoft} fg={colors.teal} />
-        <Stat testID="summary-mastery" label="Penguasaan" value={`${pct}%`} bg={colors.coralSoft} fg={colors.primary} />
+        <Stat testID="summary-mastery" label="Ketepatan latihan" value={`${pct}%`} bg={colors.coralSoft} fg={colors.primary} />
         <Stat testID="summary-time" label="Waktu belajar" value={formatDuration(result.seconds)} bg={colors.yellowSoft} fg={colors.onYellow} />
       </View>
 

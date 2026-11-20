@@ -39,6 +39,12 @@
           "resizeMode": "contain"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Tuturin memakai foto pilihanmu untuk menampilkan foto profil."
+        }
+      ],
       "expo-router",
       "expo-status-bar",
       "expo-font"

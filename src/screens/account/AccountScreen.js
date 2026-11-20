@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Screen, Title, Card, CardHeader, Button, Badge, Icon, T } from '../../components/ui.js';
 import { GOALS, LEVELS } from '../../data.js';
 import { colors } from '../../theme.js';
@@ -43,10 +44,12 @@ export default function AccountScreen({
   onEditPreferences,
   onSignOut,
   onDeleteAccount,
+  onUpdateAvatar,
 }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const isAdmin = profile.role === 'admin';
   const levelLabel = LEVELS.find((item) => item.id === preferences?.level)?.label || 'Belum diatur';
   const goalLabel = GOALS.find((item) => item.id === preferences?.goal)?.label || 'Belum diatur';
@@ -59,6 +62,25 @@ export default function AccountScreen({
     } catch (e) {
       setError(e.message || 'Terjadi kesalahan. Coba lagi.');
       setBusy(false);
+    }
+  };
+
+  const pickAvatar = async () => {
+    setError('');
+    setAvatarBusy(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.75,
+      });
+      if (result.canceled) return;
+      await onUpdateAvatar(result.assets[0]);
+    } catch (e) {
+      setError(e.message || 'Foto profil belum berhasil diperbarui.');
+    } finally {
+      setAvatarBusy(false);
     }
   };
 
@@ -77,7 +99,31 @@ export default function AccountScreen({
       <Title testID="account-title" style={{ marginTop: 10, marginBottom: 18 }}>Profil</Title>
 
       <Card style={{ alignItems: 'center', paddingVertical: 24 }}>
-        <Image source={require('../../../assets/nala-lion.png')} accessibilityLabel="Maskot Nala" style={{ width: 88, height: 88, borderRadius: 28 }} />
+        <Pressable
+          testID="change-avatar"
+          onPress={pickAvatar}
+          disabled={busy || avatarBusy || !onUpdateAvatar}
+          accessibilityRole="button"
+          accessibilityLabel="Ubah foto profil"
+          style={{ alignItems: 'center' }}
+        >
+          <View style={{ width: 92, height: 92, borderRadius: 46, overflow: 'hidden', backgroundColor: colors.coralSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Image
+              source={profile.avatar_url ? { uri: profile.avatar_url } : require('../../../assets/nala-lion.png')}
+              accessibilityLabel="Foto profil"
+              style={{ width: 92, height: 92, borderRadius: 46 }}
+            />
+            {avatarBusy ? (
+              <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(23,27,38,0.48)', alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator color="#FFFFFF" />
+              </View>
+            ) : null}
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+            <Icon name="camera-outline" size={16} color={colors.primary} />
+            <T v="caption" color={colors.primary} style={{ marginLeft: 5 }}>{avatarBusy ? 'Menyimpan foto...' : 'Ubah foto'}</T>
+          </View>
+        </Pressable>
         <T v="h2" testID="account-name" style={{ marginTop: 12, textAlign: 'center' }}>{profile.display_name || 'Pengguna Tuturin'}</T>
         <T testID="account-email" color={colors.muted} style={{ marginTop: 3, textAlign: 'center' }}>{profile.email}</T>
         <Badge testID="account-role" label={isAdmin ? 'Admin' : 'Pelajar'} tone={isAdmin ? 'coral' : 'mint'} icon={isAdmin ? 'shield-checkmark-outline' : undefined} />
@@ -113,7 +159,7 @@ export default function AccountScreen({
       ) : null}
 
       <View style={{ marginTop: 4 }}>
-        <Button testID="logout-button" label={busy ? 'Memproses...' : 'Keluar dari akun'} icon="log-out-outline" variant="secondary" disabled={busy} onPress={() => run(onSignOut)} />
+        <Button testID="logout-button" label={busy ? 'Memproses...' : 'Keluar dari akun'} icon="log-out-outline" variant="secondary" disabled={busy || avatarBusy} onPress={() => run(onSignOut)} />
       </View>
 
       <Card tone="surface" style={{ marginTop: 20 }}>
@@ -122,7 +168,7 @@ export default function AccountScreen({
           Akun dan data tersimpanmu akan dihapus permanen.
         </T>
         {!confirming ? (
-          <Button testID="delete-account-button" label="Hapus akun saya" icon="trash-outline" variant="secondary" onPress={() => setConfirming(true)} />
+            <Button testID="delete-account-button" label="Hapus akun saya" icon="trash-outline" variant="secondary" disabled={avatarBusy} onPress={() => setConfirming(true)} />
         ) : (
           <View>
             <T v="bodyBold" testID="delete-confirm-text" color={colors.bad} style={{ marginBottom: 12 }}>

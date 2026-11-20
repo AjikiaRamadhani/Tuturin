@@ -41,7 +41,7 @@ export default function LessonIntroScreen({ lesson, onStart, onBack }) {
 
       <Card tone="surface">
         <T color={colors.muted}>
-          {`${TUTOR_NAME} akan memperkenalkan satu kalimat, lalu kamu mengucapkannya. Kamu mendapat umpan balik langsung setelah setiap jawaban.`}
+          {`${TUTOR_NAME} menemanimu berlatih dengan beberapa cara: memahami arti, menyusun kata, dan mengucapkan frasa. Kamu mendapat umpan balik setelah setiap jawaban.`}
         </T>
       </Card>
 

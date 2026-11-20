@@ -11,9 +11,9 @@ Urutannya penting. Total sekitar 30 menit.
 
 ## 2. Buat tabel, aturan akses, dan data awal
 1. Buka **SQL Editor > New query**. Tempel seluruh isi `supabase/schema.sql`, klik **Run**.
-2. Query baru lagi, tempel seluruh isi `supabase/seed.sql`, klik **Run**. Ini memasukkan 12 pelajaran bawaan.
-3. Cek di **Table Editor**: ada tabel `profiles`, `lessons` (12 baris), `lesson_steps` (48 baris), `lesson_results`, `streaks`, `saved_vocab`.
-   File schema aman dijalankan ulang.
+2. Query baru lagi, tempel seluruh isi `supabase/seed.sql`, klik **Run**. Ini memasukkan 18 pelajaran dengan 108 frasa latihan.
+3. Cek di **Table Editor**: ada tabel `profiles`, `lessons` (18 baris), `lesson_steps` (108 baris), `lesson_results`, `streaks`, `saved_vocab`, serta bucket Storage `avatars`.
+   File schema dan seed aman dijalankan ulang untuk memperbarui proyek yang sudah ada.
 
 ## 3. Pengaturan login
 Buka **Authentication**:
@@ -50,7 +50,7 @@ Dashboard memeriksa role dari Supabase dan database tetap menolak perubahan yang
 
 ### Yang bisa dilakukan admin
 - **Pelajaran:** tambah, edit langkah, terbitkan atau sembunyikan (draf), hapus. Pelajar langsung melihat perubahan saat membuka aplikasi lagi, tanpa APK baru.
-  Pelajaran muncul untuk pelajar sesuai **level**-nya; yang cocok dengan **tujuan**-nya diberi label Rekomendasi.
+  Jalur pelajar mengurutkan materi menurut tujuan, level, dan `sort_order`; materi berikutnya terbuka setelah pelajaran sebelumnya diselesaikan.
 - **Pengguna:** lihat daftar, jumlah pelajaran selesai dan hari terakhir, ubah peran pelajar/admin, nonaktifkan atau aktifkan akun.
   Admin terakhir tidak bisa diturunkan, dinonaktifkan, atau menghapus akunnya (dijaga di database).
 
@@ -65,6 +65,7 @@ karena nilainya ikut tertanam di APK.
 - Jangan menaruh `sb_secret` atau `service_role` key di `config.js`, panel admin, atau APK.
 - Akun nonaktif tidak bisa membaca pelajaran atau menyimpan progres.
 - Pengguna bisa menghapus akunnya sendiri dari menu Akun (semua datanya ikut terhapus).
+- Foto profil berada di bucket privat `avatars`; setiap akun hanya bisa membaca, mengunggah, dan menghapus file pada folder dengan ID miliknya.
 
 ## Hal yang perlu diketahui
 - Proyek Supabase gratis **dijeda otomatis jika tidak dipakai sekitar 7 hari**. Buka dashboard lalu klik Restore.

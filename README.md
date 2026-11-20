@@ -11,12 +11,14 @@ Proyek dibuat dengan Expo SDK 58 dan React Native. Versi saat ini menggunakan Su
 - Peran `learner` dan `admin`; pendaftaran baru selalu menjadi pelajar.
 - Preferensi belajar: level, tujuan, dan target harian.
 - Jalur belajar bertahap sesuai tujuan, dari level yang dipilih; pelajaran berikutnya terbuka setelah pelajaran aktif selesai.
+- Kursus Percakapan Harian berisi 9 pelajaran bertingkat, dengan latihan memilih frasa, menyusun kata, dan berbicara.
 - Target harian dan streak terpisah dari progres kursus, sehingga progres jalur tetap tersimpan lintas hari.
-- Latihan berbicara dengan Nala, transkrip simulasi, penilaian kecocokan kata, dan aturan tata bahasa.
+- Latihan berbicara dengan Nala, transkrip simulasi, feedback kecocokan transkrip, latihan tata bahasa, dan pilihan jawaban.
 - Penyimpanan hasil pelajaran, streak, dan kosakata per akun.
 - Fallback katalog lokal ketika daftar pelajaran server tidak dapat dimuat.
 - Dashboard admin di dalam aplikasi/website untuk mengelola pelajaran dan akun.
 - Navigasi bawah untuk Beranda, Latihan, dan Profil.
+- Foto profil opsional dari galeri, disimpan di Supabase Storage.
 
 Nala dan penilaian bahasa masih berbasis aturan lokal; aplikasi belum menggunakan AI untuk menilai audio atau pelafalan. Pengenalan suara memerlukan development build/APK yang mendukung modul native.
 
@@ -44,7 +46,7 @@ Untuk menjalankan website dari proyek yang sama, gunakan `npx expo start --web`.
 - Perubahan role dan akses data dilindungi oleh RLS serta fungsi database; UI bukan satu-satunya lapisan keamanan.
 - Supabase `anon`/publishable key memang digunakan di klien dan harus dibatasi oleh kebijakan RLS. Jangan pernah membagikan secret/service-role key.
 
-Ikuti [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md) untuk membuat tabel, seed data awal, dan menetapkan akun admin pertama. Jika database sudah pernah diisi, jalankan ulang `supabase/seed.sql` untuk menambahkan frasa baru; seed memakai `ON CONFLICT` sehingga aman dijalankan ulang.
+Ikuti [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md) untuk membuat tabel, bucket foto profil, seed materi, dan menetapkan akun admin pertama. Jika database sudah pernah diisi, jalankan ulang `supabase/schema.sql` lalu `supabase/seed.sql`; keduanya aman dijalankan ulang.
 
 ## Struktur proyek
 
@@ -60,7 +62,7 @@ Ikuti [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md) untuk membuat tabel, seed
 | `src/components/ui.js`, `src/theme.js` | Komponen UI bersama, warna, dan tipografi |
 | `docs/` | Catatan versi dan riwayat pengembangan |
 | `supabase/schema.sql` | Skema, fungsi database, trigger, dan kebijakan RLS |
-| `supabase/seed.sql` | Data awal 12 pelajaran dengan 72 frasa latihan |
+| `supabase/seed.sql` | Data awal 18 pelajaran dengan 108 frasa latihan |
 | `config.js`, `supabase.js` | Konfigurasi dan client Supabase |
 
 Struktur `services` memakai class repository/service agar akses data dan autentikasi terpisah dari UI. React screens tetap berupa komponen fungsional, sesuai pola React.

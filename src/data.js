@@ -220,6 +220,87 @@ export const LESSON_META = {
   'mahir-ujian': { title: 'Ujian Tingkat Lanjut', minutes: 5, objectives: ['Menyampaikan opini dengan argumen', 'Memperjelas jawaban'] },
 };
 
+const CONVERSATION_PATH = [
+  {
+    id: 'pemula-percakapan-rutinitas', level: 'pemula', goal: 'percakapan', sortOrder: 11,
+    title: 'Rutinitas Sehari-hari', minutes: 5,
+    objectives: ['Menceritakan kegiatan harian', 'Menggunakan keterangan waktu sederhana'],
+    steps: [
+      ['I get up at seven every day.', 'Aku bangun pukul tujuh setiap hari.'],
+      ['I have breakfast with my sister.', 'Aku sarapan bersama saudara perempuanku.'],
+      ['I take the bus to campus.', 'Aku naik bus ke kampus.'],
+      ['I usually study in the afternoon.', 'Aku biasanya belajar pada sore hari.'],
+      ['I cook dinner with my family.', 'Aku memasak makan malam bersama keluargaku.'],
+      ['I go to bed before ten.', 'Aku tidur sebelum pukul sepuluh.'],
+    ],
+  },
+  {
+    id: 'pemula-percakapan-hobi', level: 'pemula', goal: 'percakapan', sortOrder: 12,
+    title: 'Hobi dan Kesukaan', minutes: 5,
+    objectives: ['Menyebutkan hobi', 'Menanyakan kesukaan orang lain'],
+    steps: [
+      ['I like listening to music.', 'Aku suka mendengarkan musik.'],
+      ['My favorite singer is Raisa.', 'Penyanyi favoritku adalah Raisa.'],
+      ['I play badminton after class.', 'Aku bermain bulu tangkis setelah kelas.'],
+      ['I watch films with my friends.', 'Aku menonton film bersama teman-temanku.'],
+      ['What kind of music do you like?', 'Kamu suka musik seperti apa?'],
+      ['We have the same hobby.', 'Hobi kita sama.'],
+    ],
+  },
+  {
+    id: 'menengah-percakapan-rencana', level: 'menengah', goal: 'percakapan', sortOrder: 51,
+    title: 'Membuat Rencana Akhir Pekan', minutes: 6,
+    objectives: ['Mengajak dan merespons ajakan', 'Menyepakati waktu dan tempat'],
+    steps: [
+      ['What are you planning to do this weekend?', 'Apa rencanamu akhir pekan ini?'],
+      ['I am thinking of visiting my grandparents.', 'Aku sedang berencana mengunjungi kakek dan nenekku.'],
+      ['Would you like to join us for lunch?', 'Maukah kamu bergabung untuk makan siang?'],
+      ['I have not decided yet.', 'Aku belum memutuskan.'],
+      ['Let us meet at the station at nine.', 'Ayo bertemu di stasiun pukul sembilan.'],
+      ['That sounds like a great idea.', 'Kedengarannya seperti ide yang bagus.'],
+    ],
+  },
+  {
+    id: 'menengah-percakapan-pengalaman', level: 'menengah', goal: 'percakapan', sortOrder: 52,
+    title: 'Menceritakan Pengalaman', minutes: 6,
+    objectives: ['Menceritakan perjalanan yang sudah lewat', 'Menjelaskan pengalaman favorit'],
+    steps: [
+      ['Have you ever tried snorkeling?', 'Apakah kamu pernah mencoba snorkeling?'],
+      ['I went there with my cousins last year.', 'Aku pergi ke sana bersama sepupu-sepupuku tahun lalu.'],
+      ['The trip took longer than we expected.', 'Perjalanan itu memakan waktu lebih lama dari perkiraan kami.'],
+      ['We stayed in a small guesthouse near the beach.', 'Kami menginap di penginapan kecil dekat pantai.'],
+      ['My favorite part was watching the sunrise.', 'Bagian favoritku adalah menyaksikan matahari terbit.'],
+      ['I would definitely go there again.', 'Aku pasti akan pergi ke sana lagi.'],
+    ],
+  },
+  {
+    id: 'mahir-percakapan-pendapat', level: 'mahir', goal: 'percakapan', sortOrder: 91,
+    title: 'Menyampaikan Pendapat', minutes: 7,
+    objectives: ['Menyampaikan opini dan alasan', 'Menanggapi sudut pandang berbeda'],
+    steps: [
+      ['From my perspective, public transport should be more reliable.', 'Dari sudut pandang saya, transportasi umum seharusnya lebih bisa diandalkan.'],
+      ['One reason is that many people commute every day.', 'Salah satu alasannya adalah banyak orang bepergian ke tempat kerja setiap hari.'],
+      ['This could reduce traffic in busy areas.', 'Hal ini dapat mengurangi kemacetan di kawasan yang sibuk.'],
+      ['However, the city would need to improve its routes first.', 'Namun, kota perlu memperbaiki rutenya terlebih dahulu.'],
+      ['A practical first step would be to add buses during rush hour.', 'Langkah awal yang praktis adalah menambah bus pada jam sibuk.'],
+      ['What do you think about this approach?', 'Bagaimana pendapatmu tentang pendekatan ini?'],
+    ],
+  },
+  {
+    id: 'mahir-percakapan-diskusi', level: 'mahir', goal: 'percakapan', sortOrder: 92,
+    title: 'Menanggapi dalam Diskusi', minutes: 7,
+    objectives: ['Menanggapi pendapat dengan sopan', 'Mencari solusi bersama'],
+    steps: [
+      ['I understand your concern, but I see it differently.', 'Saya memahami kekhawatiran Anda, tetapi pandangan saya berbeda.'],
+      ['Could you explain what led you to that conclusion?', 'Bisakah Anda menjelaskan apa yang membuat Anda sampai pada kesimpulan itu?'],
+      ['That is a fair point.', 'Itu pendapat yang masuk akal.'],
+      ['Let me think of an example.', 'Izinkan saya memikirkan sebuah contoh.'],
+      ['We may need to consider another option.', 'Kita mungkin perlu mempertimbangkan pilihan lain.'],
+      ['Perhaps we can agree on a compromise.', 'Mungkin kita bisa menyepakati jalan tengah.'],
+    ],
+  },
+];
+
 export const LESSONS = [];
 for (const level of LEVELS) {
   for (const goal of GOALS) {
@@ -236,3 +317,8 @@ for (const level of LEVELS) {
     });
   }
 }
+
+LESSONS.push(...CONVERSATION_PATH.map((lesson) => ({
+  ...lesson,
+  steps: lesson.steps.map(([en, id]) => ({ en, id })),
+})));

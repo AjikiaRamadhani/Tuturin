@@ -1,4 +1,4 @@
--- Data awal: 12 pelajaran bawaan. Jalankan setelah schema.sql. Aman dijalankan ulang.
+-- Data awal: 18 pelajaran bawaan dan 108 frasa. Jalankan setelah schema.sql. Aman dijalankan ulang.
 
 insert into public.lessons (id, level, goal, title, minutes, objectives, published, sort_order)
 values ('pemula-percakapan', 'pemula', 'percakapan', 'Berkenalan dan Menyapa', 4, array['Memperkenalkan diri', 'Menyapa dan menanyakan kabar'], true, 10)
@@ -9,6 +9,7 @@ insert into public.lesson_steps (lesson_id, position, en, id_text) values
   ('pemula-percakapan', 2, 'How are you today?', 'Apa kabar hari ini?'),
   ('pemula-percakapan', 3, 'Nice to meet you.', 'Senang bertemu denganmu.')
 on conflict (lesson_id, position) do nothing;
+
 
 
 insert into public.lessons (id, level, goal, title, minutes, objectives, published, sort_order)
@@ -147,4 +148,53 @@ insert into public.lesson_steps (lesson_id, position, en, id_text) values
   ('mahir-perjalanan', 5, 'Could you arrange transportation to the conference venue?', 'Bisakah Anda mengatur transportasi ke lokasi konferensi?'),
   ('mahir-ujian', 4, 'The evidence supports the conclusion that I have presented.', 'Bukti tersebut mendukung kesimpulan yang telah saya sampaikan.'),
   ('mahir-ujian', 5, 'There are several factors that should be taken into account.', 'Ada beberapa faktor yang perlu dipertimbangkan.')
+on conflict (lesson_id, position) do nothing;
+
+-- Jalur tambahan Kursus Percakapan Harian: dua node per level.
+insert into public.lessons (id, level, goal, title, minutes, objectives, published, sort_order) values
+  ('pemula-percakapan-rutinitas', 'pemula', 'percakapan', 'Rutinitas Sehari-hari', 5, array['Menceritakan kegiatan harian', 'Menggunakan keterangan waktu sederhana'], true, 11),
+  ('pemula-percakapan-hobi', 'pemula', 'percakapan', 'Hobi dan Kesukaan', 5, array['Menyebutkan hobi', 'Menanyakan kesukaan orang lain'], true, 12),
+  ('menengah-percakapan-rencana', 'menengah', 'percakapan', 'Membuat Rencana Akhir Pekan', 6, array['Mengajak dan merespons ajakan', 'Menyepakati waktu dan tempat'], true, 51),
+  ('menengah-percakapan-pengalaman', 'menengah', 'percakapan', 'Menceritakan Pengalaman', 6, array['Menceritakan perjalanan yang sudah lewat', 'Menjelaskan pengalaman favorit'], true, 52),
+  ('mahir-percakapan-pendapat', 'mahir', 'percakapan', 'Menyampaikan Pendapat', 7, array['Menyampaikan opini dan alasan', 'Menanggapi sudut pandang berbeda'], true, 91),
+  ('mahir-percakapan-diskusi', 'mahir', 'percakapan', 'Menanggapi dalam Diskusi', 7, array['Menanggapi pendapat dengan sopan', 'Mencari solusi bersama'], true, 92)
+on conflict (id) do nothing;
+
+insert into public.lesson_steps (lesson_id, position, en, id_text) values
+  ('pemula-percakapan-rutinitas', 0, 'I get up at seven every day.', 'Aku bangun pukul tujuh setiap hari.'),
+  ('pemula-percakapan-rutinitas', 1, 'I have breakfast with my sister.', 'Aku sarapan bersama saudara perempuanku.'),
+  ('pemula-percakapan-rutinitas', 2, 'I take the bus to campus.', 'Aku naik bus ke kampus.'),
+  ('pemula-percakapan-rutinitas', 3, 'I usually study in the afternoon.', 'Aku biasanya belajar pada sore hari.'),
+  ('pemula-percakapan-rutinitas', 4, 'I cook dinner with my family.', 'Aku memasak makan malam bersama keluargaku.'),
+  ('pemula-percakapan-rutinitas', 5, 'I go to bed before ten.', 'Aku tidur sebelum pukul sepuluh.'),
+  ('pemula-percakapan-hobi', 0, 'I like listening to music.', 'Aku suka mendengarkan musik.'),
+  ('pemula-percakapan-hobi', 1, 'My favorite singer is Raisa.', 'Penyanyi favoritku adalah Raisa.'),
+  ('pemula-percakapan-hobi', 2, 'I play badminton after class.', 'Aku bermain bulu tangkis setelah kelas.'),
+  ('pemula-percakapan-hobi', 3, 'I watch films with my friends.', 'Aku menonton film bersama teman-temanku.'),
+  ('pemula-percakapan-hobi', 4, 'What kind of music do you like?', 'Kamu suka musik seperti apa?'),
+  ('pemula-percakapan-hobi', 5, 'We have the same hobby.', 'Hobi kita sama.'),
+  ('menengah-percakapan-rencana', 0, 'What are you planning to do this weekend?', 'Apa rencanamu akhir pekan ini?'),
+  ('menengah-percakapan-rencana', 1, 'I am thinking of visiting my grandparents.', 'Aku sedang berencana mengunjungi kakek dan nenekku.'),
+  ('menengah-percakapan-rencana', 2, 'Would you like to join us for lunch?', 'Maukah kamu bergabung untuk makan siang?'),
+  ('menengah-percakapan-rencana', 3, 'I have not decided yet.', 'Aku belum memutuskan.'),
+  ('menengah-percakapan-rencana', 4, 'Let us meet at the station at nine.', 'Ayo bertemu di stasiun pukul sembilan.'),
+  ('menengah-percakapan-rencana', 5, 'That sounds like a great idea.', 'Kedengarannya seperti ide yang bagus.'),
+  ('menengah-percakapan-pengalaman', 0, 'Have you ever tried snorkeling?', 'Apakah kamu pernah mencoba snorkeling?'),
+  ('menengah-percakapan-pengalaman', 1, 'I went there with my cousins last year.', 'Aku pergi ke sana bersama sepupu-sepupuku tahun lalu.'),
+  ('menengah-percakapan-pengalaman', 2, 'The trip took longer than we expected.', 'Perjalanan itu memakan waktu lebih lama dari perkiraan kami.'),
+  ('menengah-percakapan-pengalaman', 3, 'We stayed in a small guesthouse near the beach.', 'Kami menginap di penginapan kecil dekat pantai.'),
+  ('menengah-percakapan-pengalaman', 4, 'My favorite part was watching the sunrise.', 'Bagian favoritku adalah menyaksikan matahari terbit.'),
+  ('menengah-percakapan-pengalaman', 5, 'I would definitely go there again.', 'Aku pasti akan pergi ke sana lagi.'),
+  ('mahir-percakapan-pendapat', 0, 'From my perspective, public transport should be more reliable.', 'Dari sudut pandang saya, transportasi umum seharusnya lebih bisa diandalkan.'),
+  ('mahir-percakapan-pendapat', 1, 'One reason is that many people commute every day.', 'Salah satu alasannya adalah banyak orang bepergian ke tempat kerja setiap hari.'),
+  ('mahir-percakapan-pendapat', 2, 'This could reduce traffic in busy areas.', 'Hal ini dapat mengurangi kemacetan di kawasan yang sibuk.'),
+  ('mahir-percakapan-pendapat', 3, 'However, the city would need to improve its routes first.', 'Namun, kota perlu memperbaiki rutenya terlebih dahulu.'),
+  ('mahir-percakapan-pendapat', 4, 'A practical first step would be to add buses during rush hour.', 'Langkah awal yang praktis adalah menambah bus pada jam sibuk.'),
+  ('mahir-percakapan-pendapat', 5, 'What do you think about this approach?', 'Bagaimana pendapatmu tentang pendekatan ini?'),
+  ('mahir-percakapan-diskusi', 0, 'I understand your concern, but I see it differently.', 'Saya memahami kekhawatiran Anda, tetapi pandangan saya berbeda.'),
+  ('mahir-percakapan-diskusi', 1, 'Could you explain what led you to that conclusion?', 'Bisakah Anda menjelaskan apa yang membuat Anda sampai pada kesimpulan itu?'),
+  ('mahir-percakapan-diskusi', 2, 'That is a fair point.', 'Itu pendapat yang masuk akal.'),
+  ('mahir-percakapan-diskusi', 3, 'Let me think of an example.', 'Izinkan saya memikirkan sebuah contoh.'),
+  ('mahir-percakapan-diskusi', 4, 'We may need to consider another option.', 'Kita mungkin perlu mempertimbangkan pilihan lain.'),
+  ('mahir-percakapan-diskusi', 5, 'Perhaps we can agree on a compromise.', 'Mungkin kita bisa menyepakati jalan tengah.')
 on conflict (lesson_id, position) do nothing;

@@ -2,7 +2,7 @@ import { BaseService } from './BaseService.js';
 import { loadJSON, saveJSON } from './storage.js';
 import { LESSONS } from '../data.js';
 
-const CACHE_KEY = 'tuturin:lessons-cache:v2';
+const CACHE_KEY = 'tuturin:lessons-cache:v3';
 
 function mapLesson(row) {
   const steps = [...(row.lesson_steps || [])]
