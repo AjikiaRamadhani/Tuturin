@@ -1,97 +1,96 @@
 # Tuturin
 
-Tuturin adalah aplikasi latihan berbicara bahasa Inggris untuk tugas Mobile Testing, Kelompok 2 NullPointer. Aplikasi ini meniru sebagian alur Pingo AI: pengguna memilih preferensi belajar, menyelesaikan pelajaran berbicara, lalu menerima umpan balik yang konsisten.
+Tuturin adalah aplikasi latihan berbicara bahasa Inggris untuk tugas Mobile Testing, Kelompok 2 NullPointer. Aplikasi ini mengambil inspirasi dari alur belajar Pingo AI: pengguna memilih preferensi, berlatih percakapan, lalu menerima umpan balik.
 
-Proyek menggunakan Expo SDK 58 dan React Native. Preferensi, progres harian, streak, dan kosakata tersimpan di perangkat; tidak ada akun, backend, atau API AI.
+Proyek dibuat dengan Expo SDK 58 dan React Native. Versi saat ini menggunakan Supabase untuk autentikasi dan penyimpanan data. Pelajar dan admin memakai aplikasi/website yang sama; tampilan setelah login mengikuti role pada profil Supabase.
 
-## Fitur saat ini
+## Fitur
 
-- Onboarding untuk memilih level, tujuan, dan target harian 1, 2, atau 3 pelajaran.
-- Rencana belajar setelah onboarding pertama.
-- Beranda berisi progres harian, streak, daftar pelajaran, preferensi, dan kosakata tersimpan.
-- 12 pelajaran (3 level x 4 tujuan), masing-masing terdiri dari 4 kalimat dengan terjemahan Indonesia.
-- Tutor Nala dengan respons skrip berdasarkan skor, bukan model AI.
-- Input transkrip melalui mikrofon pada build native yang mendukung `expo-speech-recognition`, serta Mode Simulasi untuk mengetik transkrip.
-- Umpan balik skor kecocokan kata dan saran tata bahasa berbasis aturan.
-- Penyimpanan frasa/kosakata dari pelajaran dan ringkasan.
+- Daftar, masuk, reset kata sandi, dan hapus akun.
+- Halaman sambutan animasi, tautan undangan, dan layar untuk membuat password pertama/reset.
+- Peran `learner` dan `admin`; pendaftaran baru selalu menjadi pelajar.
+- Preferensi belajar: level, tujuan, dan target harian.
+- Jalur belajar bertahap sesuai tujuan, dari level yang dipilih; pelajaran berikutnya terbuka setelah pelajaran aktif selesai.
+- Target harian dan streak terpisah dari progres kursus, sehingga progres jalur tetap tersimpan lintas hari.
+- Latihan berbicara dengan Nala, transkrip simulasi, penilaian kecocokan kata, dan aturan tata bahasa.
+- Penyimpanan hasil pelajaran, streak, dan kosakata per akun.
+- Fallback katalog lokal ketika daftar pelajaran server tidak dapat dimuat.
+- Dashboard admin di dalam aplikasi/website untuk mengelola pelajaran dan akun.
+- Navigasi bawah untuk Beranda, Latihan, dan Profil.
 
-## Menjalankan proyek
+Nala dan penilaian bahasa masih berbasis aturan lokal; aplikasi belum menggunakan AI untuk menilai audio atau pelafalan. Pengenalan suara memerlukan development build/APK yang mendukung modul native.
 
-Persyaratan: Node.js versi LTS dan npm. Repository ini sudah merupakan proyek Expo lengkap; tidak perlu membuat proyek baru atau menyalin file secara manual.
+## Menjalankan aplikasi
 
-```bash
-npm ci
-npx expo start
-```
+Persyaratan: Node.js LTS, npm, dan proyek Supabase. Konfigurasi database dan akun dijelaskan di [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md).
 
-Scan QR code dengan Expo Go untuk melihat tampilan dan alur simulasi. **Expo Go tidak menyertakan modul native speech recognition**, jadi gunakan Mode Simulasi untuk mengirim transkrip. Perubahan yang melibatkan modul native perlu dijalankan dalam development build atau APK.
+1. Isi `SUPABASE_URL` dan **publishable/anon key** di `config.js`. Jangan gunakan `sb_secret` atau `service_role` key pada aplikasi atau panel admin.
+2. Pasang dependensi dan jalankan Expo:
 
-## Membuat APK Android
+   ```bash
+   npm ci
+   npx expo start
+   ```
 
-`eas.json` sudah menyediakan profil `preview` dengan keluaran APK. Pastikan sudah masuk ke akun Expo yang memiliki akses ke proyek ini, lalu jalankan:
+Jika Supabase belum dikonfigurasi, aplikasi menampilkan layar petunjuk konfigurasi. Untuk mencoba pengenalan suara, gunakan development build atau APK; Expo Go dapat dipakai untuk menjelajahi UI dan Mode Simulasi.
+
+Untuk menjalankan website dari proyek yang sama, gunakan `npx expo start --web`. Pelajar dan admin membuka alamat yang sama; dashboard admin muncul otomatis setelah login dengan akun ber-role `admin`.
+
+## Peran dan pengelolaan
+
+- **Pelajar** mendaftar dan masuk melalui aplikasi, mengatur preferensi, mengerjakan pelajaran, serta melihat progres dan kosakata miliknya.
+- **Admin** masuk lewat formulir yang sama. Sesudah login, aplikasi otomatis membuka dashboard admin untuk mengelola pelajaran dan akun.
+- Akun admin khusus tidak ditentukan hanya dari alamat email. Buat akun dengan email yang kamu pilih, lalu tetapkan role `admin` satu kali di Supabase. Sesudah itu dashboard admin muncul otomatis setiap kali akun tersebut masuk.
+- Perubahan role dan akses data dilindungi oleh RLS serta fungsi database; UI bukan satu-satunya lapisan keamanan.
+- Supabase `anon`/publishable key memang digunakan di klien dan harus dibatasi oleh kebijakan RLS. Jangan pernah membagikan secret/service-role key.
+
+Ikuti [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md) untuk membuat tabel, seed data awal, dan menetapkan akun admin pertama. Jika database sudah pernah diisi, jalankan ulang `supabase/seed.sql` untuk menambahkan frasa baru; seed memakai `ON CONFLICT` sehingga aman dijalankan ulang.
+
+## Struktur proyek
+
+| Lokasi | Tanggung jawab |
+|---|---|
+| `src/app/` | Route Expo Router dan navigasi |
+| `src/screens/` | Komponen layar sambutan, autentikasi, admin, onboarding, latihan, ringkasan, profil, dan status |
+| `src/providers/TuturinProvider.js` | State sesi dan koordinasi data untuk layar |
+| `src/services/` | Class service/repository untuk autentikasi, profil, pelajaran, progres, dan kosakata |
+| `src/domain/lessons.js`, `src/domain/learningPath.js` | Katalog pelajaran dan aturan jalur bertahap serta pembukaan pelajaran |
+| `src/data.js`, `src/domain/` | Data bawaan dan aturan latihan/penilaian |
+| `src/services/` | Repository data, penyimpanan lokal, autentikasi, dan adapter speech recognition |
+| `src/components/ui.js`, `src/theme.js` | Komponen UI bersama, warna, dan tipografi |
+| `docs/` | Catatan versi dan riwayat pengembangan |
+| `supabase/schema.sql` | Skema, fungsi database, trigger, dan kebijakan RLS |
+| `supabase/seed.sql` | Data awal 12 pelajaran dengan 72 frasa latihan |
+| `config.js`, `supabase.js` | Konfigurasi dan client Supabase |
+
+Struktur `services` memakai class repository/service agar akses data dan autentikasi terpisah dari UI. React screens tetap berupa komponen fungsional, sesuai pola React.
+
+## Build APK Android
+
+`eas.json` menyediakan profil `preview` untuk APK. Pastikan konfigurasi Supabase sudah benar dan akun Expo memiliki akses ke proyek:
 
 ```bash
 npx eas-cli@latest build --platform android --profile preview
 ```
 
-EAS Build berjalan di cloud dan dapat memerlukan waktu antre. Setelah build selesai, unduh APK dari tautan hasil build dan pasang di perangkat Android. Ketersediaan pengenalan suara bergantung pada layanan speech recognition di perangkat dan izin mikrofon; coba Mode Simulasi jika layanan tidak tersedia.
+Konfigurasi klien akan tertanam dalam APK. Jika kredensial berubah, build ulang APK. Untuk rilis publik, siapkan kebijakan privasi dan pengungkapan data yang sesuai.
 
-## Alur aplikasi
+## Pengujian
 
-1. Pilih level, tujuan, dan target harian pada onboarding.
-2. Setelah onboarding pertama, tinjau Rencana Belajar lalu lanjut ke Beranda.
-3. Pilih pelajaran yang direkomendasikan atau pelajaran lain di level yang dipilih.
-4. Tinjau tujuan pelajaran, lalu mulai empat langkah latihan bersama Nala.
-5. Ucapkan kalimat target atau isi transkrip melalui Mode Simulasi.
-6. Tinjau skor dan umpan balik. Pada skor tinggi, pengguna dapat lanjut; pada skor menengah pengguna dapat mencoba lagi atau lanjut; pada skor rendah, tombol lanjut tersedia setelah tiga percobaan. Pengguna tetap dapat mencoba lagi.
-7. Setelah menyelesaikan seluruh langkah, lihat ringkasan dan kembali ke Beranda.
+Jalankan pemeriksaan kode:
 
-## Aturan progres dan umpan balik
+```bash
+npm run lint
+npx expo install --check
+```
 
-- Target harian adalah jumlah pelajaran yang selesai, bukan jumlah kalimat. Setiap pelajaran berisi empat langkah.
-- Pelajaran baru dihitung setelah seluruh langkah diselesaikan, dan maksimal sekali per hari untuk setiap pelajaran. Keluar sebelum selesai tidak menambah progres.
-- Setelah target tercapai, tombol Beranda berubah menjadi **Belajar Lagi**. Pengguna masih dapat menyelesaikan pelajaran tambahan; progres selesai dapat melebihi target, sementara persentase progres dibatasi sampai 100%.
-- Streak bertambah maksimal sekali per hari saat pelajaran pertama hari itu selesai. Streak aktif ditampilkan untuk hari ini atau kemarin; tanggal mengikuti waktu lokal perangkat.
-- Penguasaan pelajaran pada ringkasan adalah rata-rata skor terbaik dari empat langkah.
-- Skor adalah kecocokan urutan kata antara target dan transkrip. Ini bukan analisis audio atau penilaian fonetik.
-- Pemeriksa tata bahasa memakai aturan dan daftar kata kerja terbatas. Kesalahan yang tidak tercakup daftar tidak akan terdeteksi; hasilnya bukan pemeriksaan tata bahasa lengkap.
-- Nala memakai respons deterministik berdasarkan skor dan nomor langkah. Variasi teks respons tidak dipilih secara acak.
-- Progres harian versi lama (yang memakai daftar kalimat) direset karena formatnya berbeda. Preferensi level dan tujuan yang valid tetap dipakai; target lama bernilai 3 kebetulan tetap cocok, sedangkan target lama 5 atau 10 dinormalisasi ke 2 pelajaran.
+`supabase/tests/rls_test.sql` adalah pengujian kebijakan database yang perlu dijalankan pada database Postgres lokal dengan shim pengujian. **Jangan jalankan file di `supabase/tests` pada proyek Supabase asli** karena setup test dapat mengosongkan data.
 
-## `testID` untuk Maestro
+Keberhasilan lint/config bukan bukti bahwa login, sinkronisasi, mikrofon, maupun APK sudah diuji pada perangkat. Uji alur autentikasi, akun admin/pelajar, RLS, latihan, dan build pada emulator/perangkat setelah proyek Supabase siap.
 
-`<id>` pelajaran berbentuk `{level}-{tujuan}`, misalnya `pemula-karier`. `<i>` dan `<n>` adalah indeks angka mulai dari 0 atau nomor urut sesuai elemen yang dirender.
+## Catatan keamanan
 
-| Layar | `testID` utama |
-|---|---|
-| Onboarding | `onboarding-title`, `level-pemula` / `level-menengah` / `level-mahir`, `goal-percakapan` / `goal-karier` / `goal-perjalanan` / `goal-ujian`, `target-1` / `target-2` / `target-3`, `onboarding-start`, `onboarding-cancel` saat mengubah preferensi |
-| Rencana | `plan-title`, `plan-level`, `plan-goal`, `plan-target`, `plan-recommended`, `plan-continue` |
-| Beranda | `home-greeting`, `streak-text`, `daily-message`, `start-button`, `progress-text`, `progress-percent`, `progress-bar`, `lesson-<id>`, `lesson-<id>-title`, `lesson-<id>-recommended`, `lesson-<id>-status`, `summary-level`, `summary-goal`, `summary-target`, `change-target-button`, `vocab-button` |
-| Intro pelajaran | `intro-title`, `intro-duration`, `intro-objective-<i>`, `intro-start`, `back-button` |
-| Pelajaran | `practice-progress`, `practice-bar`, `target-sentence`, `target-translation`, `hint-button`, `hint-text` saat dibuka, `save-vocab-button`, `save-vocab-label`, `nala-latest`, `nala-message-<n>`, `user-message-<n>`, `mic-button`, `speech-status`, `practice-message` saat ada pesan, `sim-input`, `sim-fill-target`, `sim-submit` |
-| Umpan balik dalam pelajaran | `score-text`, `score-label`, `stat-correct`, `stat-wrong`, `stat-extra`, `word-<i>-ok` / `word-<i>-bad`, `bad-words-text`, `extra-words-text` jika ada, `grammar-none` atau `grammar-issue-<i>`, `retry-button` dan `next-button` sesuai skor/percobaan |
-| Ringkasan akhir | `objective-complete`, `summary-lesson-title`, `summary-new-phrases`, `summary-mastery`, `summary-time`, `summary-streak`, `phrase-<i>-en`, `save-phrase-<i>`, `transcript-toggle`, `transcript-list` saat dibuka, `transcript-line-<n>`, `summary-home` |
-| Kosakata | `vocab-title`, `vocab-empty` saat belum ada item, `vocab-item-<i>-en`, `vocab-item-<i>-id`, `vocab-delete-<i>` |
-
-Karena preferensi dan progres tersimpan lokal, siapkan kondisi aplikasi yang bersih sebelum mengulang skrip onboarding dari awal. Verifikasi selector `testID` pada versi Maestro dan perangkat yang digunakan.
-
-## Status pengujian
-
-`CATATAN_V2.md` mencatat hasil berikut dari lingkungan pengembangan: 42 uji logika versi awal, 12 uji logika tambahan, 32 uji alur di browser dengan komponen React Native tiruan, dan 1 uji tanpa modul suara. Skrip uji tersebut tidak disertakan di repository, jadi hasilnya belum dapat direproduksi langsung dari checkout ini.
-
-> **Belum diverifikasi di perangkat:** tampilan React Native asli, font dan ikon pada HP, build APK hasil EAS, izin mikrofon, serta speech-to-text sungguhan. Pengujian browser memakai tiruan komponen dan uji suara memakai modul tiruan, bukan rekaman dari perangkat.
-
-## Struktur file utama
-
-| File | Fungsi |
-|---|---|
-| `App.js` | Inisialisasi data, navigasi layar berbasis state, dan penyimpanan lokal |
-| `OnboardingScreen.js`, `PlanScreen.js` | Pengaturan awal dan rencana belajar |
-| `HomeScreen.js` | Progres, streak, daftar pelajaran, dan pengaturan |
-| `LessonIntroScreen.js`, `LessonScreen.js` | Intro, langkah latihan, transkrip, dan umpan balik |
-| `SummaryScreen.js`, `VocabScreen.js` | Ringkasan pelajaran dan kosakata tersimpan |
-| `data.js` | Pilihan onboarding, 48 kalimat, terjemahan, dan metadata pelajaran |
-| `logic.js` | Penilaian, aturan tata bahasa, respons Nala, progres, streak, dan kosakata |
-| `speech.js` | Adapter speech recognition dan penanganan status/error |
-| `storage.js`, `theme.js`, `ui.js` | Penyimpanan, tema, dan komponen UI bersama |
-| `app.json`, `eas.json` | Konfigurasi Expo, izin native, dan profil APK EAS |
+- File klien hanya boleh berisi publishable/anon key; secret/service-role key memberi hak istimewa dan tidak boleh masuk ke source, APK, atau panel web.
+- Role pengguna tidak boleh dinaikkan sendiri dari aplikasi; penetapan admin awal dilakukan melalui dashboard SQL.
+- Kebijakan RLS pada `supabase/schema.sql` wajib diterapkan sebelum aplikasi digunakan dengan data nyata.
+- Jika key `sb_secret` pernah tersimpan atau dibagikan melalui source/repository, rotasi/revoke key tersebut di dashboard Supabase dan gunakan publishable/anon key baru untuk klien.
