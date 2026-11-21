@@ -45,11 +45,14 @@ export default function AccountScreen({
   onSignOut,
   onDeleteAccount,
   onUpdateAvatar,
+  onRemoveAvatar,
 }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [confirmAvatarRemoval, setConfirmAvatarRemoval] = useState(false);
   const isAdmin = profile.role === 'admin';
   const levelLabel = LEVELS.find((item) => item.id === preferences?.level)?.label || 'Belum diatur';
   const goalLabel = GOALS.find((item) => item.id === preferences?.goal)?.label || 'Belum diatur';
@@ -79,6 +82,21 @@ export default function AccountScreen({
       await onUpdateAvatar(result.assets[0]);
     } catch (e) {
       setError(e.message || 'Foto profil belum berhasil diperbarui.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    setAvatarBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await onRemoveAvatar();
+      setConfirmAvatarRemoval(false);
+      setNotice(result?.cleanupWarning || 'Foto profil dihapus. Gambar bawaan Nala digunakan kembali.');
+    } catch (e) {
+      setError(e.message || 'Foto profil belum berhasil dihapus.');
     } finally {
       setAvatarBusy(false);
     }
@@ -124,6 +142,27 @@ export default function AccountScreen({
             <T v="caption" color={colors.primary} style={{ marginLeft: 5 }}>{avatarBusy ? 'Menyimpan foto...' : 'Ubah foto'}</T>
           </View>
         </Pressable>
+        {profile.avatar_url && onRemoveAvatar ? (
+          <View style={{ marginTop: 10, alignItems: 'center' }}>
+            {!confirmAvatarRemoval ? (
+              <Pressable
+                testID="remove-avatar-button"
+                onPress={() => setConfirmAvatarRemoval(true)}
+                disabled={busy || avatarBusy}
+                accessibilityRole="button"
+                accessibilityLabel="Hapus foto profil"
+              >
+                <T v="caption" color={colors.bad}>Hapus foto</T>
+              </Pressable>
+            ) : (
+              <View style={{ width: '100%', gap: 8 }}>
+                <T v="caption" color={colors.muted} style={{ textAlign: 'center' }}>Hapus foto dan gunakan gambar bawaan?</T>
+                <Button testID="remove-avatar-confirm" label={avatarBusy ? 'Menghapus...' : 'Ya, hapus foto'} icon="trash-outline" variant="secondary" disabled={busy || avatarBusy} onPress={removeAvatar} />
+                <Button testID="remove-avatar-cancel" label="Batal" variant="secondary" disabled={avatarBusy} onPress={() => setConfirmAvatarRemoval(false)} />
+              </View>
+            )}
+          </View>
+        ) : null}
         <T v="h2" testID="account-name" style={{ marginTop: 12, textAlign: 'center' }}>{profile.display_name || 'Pengguna Tuturin'}</T>
         <T testID="account-email" color={colors.muted} style={{ marginTop: 3, textAlign: 'center' }}>{profile.email}</T>
         <Badge testID="account-role" label={isAdmin ? 'Admin' : 'Pelajar'} tone={isAdmin ? 'coral' : 'mint'} icon={isAdmin ? 'shield-checkmark-outline' : undefined} />
@@ -155,6 +194,11 @@ export default function AccountScreen({
       {error ? (
         <View style={{ backgroundColor: colors.badBg, borderRadius: 16, padding: 12, marginBottom: 16 }}>
           <T testID="account-error" color={colors.bad}>{error}</T>
+        </View>
+      ) : null}
+      {notice ? (
+        <View style={{ backgroundColor: colors.yellowSoft, borderRadius: 16, padding: 12, marginBottom: 16 }}>
+          <T color={colors.onYellow}>{notice}</T>
         </View>
       ) : null}
 

@@ -12,6 +12,8 @@ Proyek dibuat dengan Expo SDK 58 dan React Native. Versi saat ini menggunakan Su
 - Preferensi belajar: level, tujuan, dan target harian.
 - Jalur belajar bertahap sesuai tujuan, dari level yang dipilih; pelajaran berikutnya terbuka setelah pelajaran aktif selesai.
 - Kursus Percakapan Harian berisi 9 pelajaran bertingkat, dengan latihan memilih frasa, menyusun kata, dan berbicara.
+- Pelajaran terkunci hanya dapat dibuka setelah urutan jalurnya terbuka; tautan langsung ke materi terkunci diarahkan kembali ke Jalur Belajar.
+- Foto profil dapat diganti atau dihapus dari halaman Profil; penghapusan mengembalikan gambar bawaan Nala.
 - Target harian dan streak terpisah dari progres kursus, sehingga progres jalur tetap tersimpan lintas hari.
 - Latihan berbicara dengan Nala, transkrip simulasi, feedback kecocokan transkrip, latihan tata bahasa, dan pilihan jawaban.
 - Penyimpanan hasil pelajaran, streak, dan kosakata per akun.

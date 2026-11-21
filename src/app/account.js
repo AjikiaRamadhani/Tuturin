@@ -4,7 +4,7 @@ import AccountScreen from '../screens/account/AccountScreen.js';
 import { useTuturin } from '../providers/TuturinProvider.js';
 
 export default function AccountRoute() {
-  const { profile, preferences, progress, streak, vocabulary, signOut, deleteAccount, updateAvatar } = useTuturin();
+  const { profile, preferences, progress, streak, vocabulary, signOut, deleteAccount, updateAvatar, removeAvatar } = useTuturin();
   if (!profile) return <Redirect href="/home" />;
   return <AccountScreen
         profile={profile}
@@ -17,6 +17,7 @@ export default function AccountRoute() {
         onSignOut={signOut}
         onDeleteAccount={deleteAccount}
         onUpdateAvatar={updateAvatar}
+        onRemoveAvatar={removeAvatar}
         hasBottomNav={profile.role === 'learner'}
       />;
 }

@@ -65,7 +65,7 @@ karena nilainya ikut tertanam di APK.
 - Jangan menaruh `sb_secret` atau `service_role` key di `config.js`, panel admin, atau APK.
 - Akun nonaktif tidak bisa membaca pelajaran atau menyimpan progres.
 - Pengguna bisa menghapus akunnya sendiri dari menu Akun (semua datanya ikut terhapus).
-- Foto profil berada di bucket privat `avatars`; setiap akun hanya bisa membaca, mengunggah, dan menghapus file pada folder dengan ID miliknya.
+- Foto profil berada di bucket privat `avatars`; setiap akun hanya bisa membaca, mengunggah, dan menghapus file pada folder dengan ID miliknya. Pengguna dapat mengganti foto atau menghapusnya untuk kembali ke gambar bawaan.
 
 ## Hal yang perlu diketahui
 - Proyek Supabase gratis **dijeda otomatis jika tidak dipakai sekitar 7 hari**. Buka dashboard lalu klik Restore.
@@ -75,6 +75,6 @@ karena nilainya ikut tertanam di APK.
 - Nala masih skrip, bukan AI sungguhan.
 
 ## Uji aturan akses
-`supabase/tests/rls_test.sql` menguji 48 aturan akses di Postgres. Butuh Postgres lokal dengan tiruan Supabase:
+`supabase/tests/rls_test.sql` menguji aturan akses tabel dan Storage, termasuk pembatasan folder avatar serta akun nonaktif. Butuh Postgres lokal dengan tiruan Supabase:
 buat database kosong, jalankan `tests/supabase_shim.sql`, `schema.sql`, `seed.sql`, lalu `tests/rls_test.sql`. Semua baris harus berawalan `ok`.
 Jangan menjalankan berkas di folder tests pada proyek Supabase asli (berkas itu mengosongkan tabel pengguna).

@@ -12,6 +12,18 @@ insert into auth.users (id, email) values
  ('00000000-0000-0000-0000-00000000000b', 'budi@x.id'),
  ('00000000-0000-0000-0000-00000000000c', 'cici@x.id');
 update profiles set role = 'admin' where email = 'admin@x.id';   -- bootstrap lewat SQL Editor (tanpa jwt)
+delete from storage.objects where bucket_id = 'avatars' and name in (
+  '00000000-0000-0000-0000-00000000000a/admin-fixture.png',
+  '00000000-0000-0000-0000-00000000000b/budi-fixture.png',
+  '00000000-0000-0000-0000-00000000000b/budi-renamed.png',
+  '00000000-0000-0000-0000-00000000000b/inactive-fixture.png',
+  '00000000-0000-0000-0000-00000000000b/inactive-upload.png',
+  '00000000-0000-0000-0000-00000000000c/cici-fixture.png',
+  '00000000-0000-0000-0000-00000000000c/hack.png'
+);
+insert into storage.objects (bucket_id, name) values
+  ('avatars', '00000000-0000-0000-0000-00000000000a/admin-fixture.png'),
+  ('avatars', '00000000-0000-0000-0000-00000000000c/cici-fixture.png');
 
 do $$
 declare A uuid := '00000000-0000-0000-0000-00000000000a'; B uuid := '00000000-0000-0000-0000-00000000000b'; C uuid := '00000000-0000-0000-0000-00000000000c';
@@ -31,8 +43,22 @@ begin
   begin update profiles set email = 'x@x.id' where id = B; perform tt.rec('pelajar tidak boleh mengubah email profil', false); exception when others then perform tt.rec('pelajar tidak boleh mengubah email profil', true); end;
   begin update profiles set target = 5 where id = B; perform tt.rec('target di luar 1..3 ditolak', false); exception when others then perform tt.rec('target di luar 1..3 ditolak', true); end;
   update profiles set display_name = 'hack' where id = C; get diagnostics n = row_count; perform tt.rec('pelajar tidak bisa mengubah profil orang lain', n = 0);
-  select count(*) into n from lessons; perform tt.rec('pelajar melihat 12 pelajaran terbit', n = 12, n::text);
-  select count(*) into n from lesson_steps; perform tt.rec('pelajar melihat 48 langkah', n = 48, n::text);
+  select count(*) into n from lessons; perform tt.rec('pelajar melihat 18 pelajaran terbit', n = 18, n::text);
+  select count(*) into n from lesson_steps; perform tt.rec('pelajar melihat 108 langkah', n = 108, n::text);
+  insert into storage.objects (bucket_id, name) values ('avatars', B::text || '/budi-fixture.png'); get diagnostics n = row_count;
+  perform tt.rec('pelajar mengunggah avatar ke folder sendiri', n = 1);
+  update storage.objects set name = B::text || '/budi-renamed.png' where bucket_id = 'avatars' and name = B::text || '/budi-fixture.png'; get diagnostics n = row_count;
+  perform tt.rec('pelajar dapat mengganti objek avatar sendiri', n = 1);
+  update storage.objects set name = B::text || '/hack.png' where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-00000000000c/cici-fixture.png'; get diagnostics n = row_count;
+  perform tt.rec('pelajar tidak dapat mengganti objek avatar orang lain', n = 0);
+  perform tt.rec('pelajar dapat membaca avatar sendiri', (select count(*) from storage.objects where bucket_id = 'avatars' and name = B::text || '/budi-renamed.png') = 1);
+  select count(*) into n from storage.objects where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-00000000000c/cici-fixture.png';
+  perform tt.rec('pelajar tidak dapat membaca avatar orang lain', n = 0);
+  begin insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000c/hack.png'); perform tt.rec('pelajar tidak dapat mengunggah ke folder orang lain', false); exception when others then perform tt.rec('pelajar tidak dapat mengunggah ke folder orang lain', true); end;
+  delete from storage.objects where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-00000000000c/cici-fixture.png'; get diagnostics n = row_count;
+  perform tt.rec('pelajar tidak dapat menghapus avatar orang lain', n = 0);
+  delete from storage.objects where bucket_id = 'avatars' and name = B::text || '/budi-renamed.png'; get diagnostics n = row_count;
+  perform tt.rec('pelajar dapat menghapus avatar sendiri', n = 1);
   begin insert into lessons (id, level, goal, title, objectives) values ('hack', 'pemula', 'ujian', 'x', array['y']); perform tt.rec('pelajar tidak boleh menambah pelajaran', false); exception when others then perform tt.rec('pelajar tidak boleh menambah pelajaran', true); end;
   update lessons set title = 'diubah' where id = 'pemula-ujian'; get diagnostics n = row_count; perform tt.rec('pelajar tidak bisa mengubah pelajaran', n = 0);
   delete from lessons where id = 'pemula-ujian'; get diagnostics n = row_count; perform tt.rec('pelajar tidak bisa menghapus pelajaran', n = 0);
@@ -58,6 +84,10 @@ begin
 
   -- 5 admin
   perform tt.as_user(A);
+  select count(*) into n from storage.objects where bucket_id = 'avatars' and name = A::text || '/admin-fixture.png';
+  perform tt.rec('admin dapat membaca avatar sendiri', n = 1);
+  select count(*) into n from storage.objects where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-00000000000c/cici-fixture.png';
+  perform tt.rec('admin hanya dapat membaca avatar di foldernya sendiri', n = 0);
   select count(*) into n from profiles; perform tt.rec('admin melihat semua profil', n = 3, n::text);
   select count(*) into n from lesson_results; perform tt.rec('admin dapat membaca hasil semua pelajar', n = 1);
   begin insert into saved_vocab (user_id, en, id_text) values (B, 'Hack', 'x'); perform tt.rec('admin tidak menulis kosakata pelajar', false); exception when others then perform tt.rec('admin tidak menulis kosakata pelajar', true); end;
@@ -89,13 +119,18 @@ begin
   perform tt.as_user(A);
   update profiles set active = false where id = B; get diagnostics n = row_count; perform tt.rec('admin dapat menonaktifkan pelajar', n = 1);
   perform tt.back();
+  insert into storage.objects (bucket_id, name) values ('avatars', B::text || '/inactive-fixture.png');
   perform tt.as_user(B);
   select count(*) into n from lessons; perform tt.rec('akun nonaktif tidak melihat pelajaran', n = 0);
   select count(*) into n from profiles; perform tt.rec('akun nonaktif masih membaca profilnya (untuk pesan)', n = 1);
+  select count(*) into n from storage.objects where bucket_id = 'avatars' and name = B::text || '/inactive-fixture.png'; perform tt.rec('akun nonaktif tidak dapat membaca avatar', n = 0);
+  begin insert into storage.objects (bucket_id, name) values ('avatars', B::text || '/inactive-upload.png'); perform tt.rec('akun nonaktif tidak dapat mengunggah avatar', false); exception when others then perform tt.rec('akun nonaktif tidak dapat mengunggah avatar', true); end;
+  delete from storage.objects where bucket_id = 'avatars' and name = B::text || '/inactive-fixture.png'; get diagnostics n = row_count; perform tt.rec('akun nonaktif tidak dapat menghapus avatar', n = 0);
   begin insert into lesson_results (user_id, lesson_id, day, mastery, seconds) values (B, 'x', current_date, 1, 1); perform tt.rec('akun nonaktif tidak bisa menyimpan hasil', false); exception when others then perform tt.rec('akun nonaktif tidak bisa menyimpan hasil', true); end;
   update profiles set active = true where id = B; get diagnostics n = row_count; perform tt.rec('akun nonaktif tidak bisa mengaktifkan dirinya', n = 0);
   perform tt.back();
   perform tt.as_user(A); update profiles set active = true where id = B; perform tt.back();
+  delete from storage.objects where bucket_id = 'avatars' and name = B::text || '/inactive-fixture.png';
 
   -- 7 admin terakhir
   perform tt.as_user(A);
@@ -106,7 +141,7 @@ begin
   update profiles set role = 'learner' where id = A; get diagnostics n = row_count; perform tt.rec('dengan admin kedua, admin boleh turun peran', n = 1);
   perform tt.back();
   perform tt.as_user(A);
-  select count(*) into n from lessons where published; perform tt.rec('mantan admin kini seperti pelajar (hanya terbit)', n = 12, n::text);
+  select count(*) into n from lessons where published; perform tt.rec('mantan admin kini seperti pelajar (hanya terbit)', n = 18, n::text);
   perform tt.back();
   update profiles set role = 'admin' where id = A; update profiles set role = 'learner' where id = C;
 

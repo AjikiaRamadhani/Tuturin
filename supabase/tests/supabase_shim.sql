@@ -14,6 +14,7 @@ create table storage.buckets (
   allowed_mime_types text[]
 );
 create table storage.objects (bucket_id text not null, name text not null);
+alter table storage.objects enable row level security;
 create function storage.foldername(object_name text) returns text[]
 language sql immutable as $$ select string_to_array(object_name, '/') $$;
 grant usage on schema storage to authenticated, anon;

@@ -77,7 +77,17 @@ export class ProfileRepository extends BaseService {
 
   async removeAvatar(userId, avatarPath) {
     if (!avatarPath || !avatarPath.startsWith(`${userId}/`)) return;
-    this.unwrap(await this.client.storage.from('avatars').remove([avatarPath]));
+    const rows = this.unwrap(await this.client.from('profiles')
+      .update({ avatar_path: null })
+      .eq('id', userId)
+      .select('id'));
+    if (!rows || rows.length === 0) throw new Error('Foto profil belum dapat dihapus. Coba lagi.');
+    try {
+      this.unwrap(await this.client.storage.from('avatars').remove([avatarPath]));
+      return { cleanupWarning: '' };
+    } catch {
+      return { cleanupWarning: 'Foto sudah dihapus dari profil, tetapi file lama belum dapat dibersihkan dari penyimpanan.' };
+    }
   }
 }
 

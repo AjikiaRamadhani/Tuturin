@@ -42,3 +42,9 @@ export function nextPathLesson(path) {
     || [...(path || [])].reverse().find((lesson) => lesson.pathStatus === 'completed')
     || null;
 }
+
+export function canOpenPathLesson(lessons, level, goal, completedIds, lessonId) {
+  const lesson = buildLearningPath(lessons, level, goal, completedIds)
+    .find((item) => item.id === lessonId);
+  return Boolean(lesson && ['current', 'completed'].includes(lesson.pathStatus));
+}

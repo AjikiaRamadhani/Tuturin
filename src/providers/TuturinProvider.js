@@ -168,6 +168,15 @@ export function TuturinProvider({ children }) {
     return avatar.url;
   }, [user, savedAvatarPath]);
 
+  const removeAvatar = useCallback(async () => {
+    if (!user) throw new Error('Sesi akun berakhir. Silakan masuk kembali.');
+    if (!savedAvatarPath) return;
+    const result = await services.profiles.removeAvatar(user.id, savedAvatarPath);
+    setProfile((current) => ({ ...current, avatar_path: null, avatar_url: null }));
+    setSyncWarning(result?.cleanupWarning || '');
+    return result;
+  }, [user, savedAvatarPath]);
+
   const finishLesson = useCallback(async (lessonId, lessonResult) => {
     if (!user) throw new Error('Sesi akun berakhir. Silakan masuk kembali.');
     const completedToday = normalizeProgress(progress, today);
@@ -233,12 +242,13 @@ export function TuturinProvider({ children }) {
     deleteAccount,
     savePreferences,
     updateAvatar,
+    removeAvatar,
     finishLesson,
     toggleVocabulary,
   }), [
     phase, session, user, profile, lessons, lessonsSource, progress, streak, today,
     pathCompleted, vocabulary, syncWarning, result, retry, signIn, signUp, resetPassword, signOut,
-    deleteAccount, savePreferences, updateAvatar, finishLesson, toggleVocabulary,
+    deleteAccount, savePreferences, updateAvatar, removeAvatar, finishLesson, toggleVocabulary,
   ]);
 
   return <TuturinContext.Provider value={value}>{children}</TuturinContext.Provider>;
